@@ -1,0 +1,29 @@
+{
+  "mission": "Colony Kernel Milestone 1A — deterministic core",
+  "created": "2026-09-17",
+  "normativeSpecification": {
+    "path": "colony-kernel-v0.1.1.md",
+    "sha256": "d3c8e715c09c446c2934d1177bb86b3f762e7cce055d28f0fa2739dc8b1af841",
+    "bytes": 43893
+  },
+  "handoff": {
+    "path": "colony-skeleton-handoff-v0.1.1.md",
+    "sha256": "ed15ef7b5cb5e7c2b443b5f13f42f9ebe43439744efb9480e99350d80a2745c1",
+    "bytes": 7161
+  },
+  "historicalBaseline": {
+    "path": "colony-kernel-v0.1.md",
+    "sha256": "ff2356e82d693229aa4509c0d1b8021d3453d0b3b3c806b78897c1d502d208a5"
+  },
+  "preservationRules": [
+    "Normative inputs are read-only; verified byte-identical after project creation.",
+    "No modification to v0.1/v0.1.1 specs, review packets, independent-review inputs/outputs, DSH install, profiles, SOULs, old experiments.",
+    "Implementation confined to the colony-kernel/ project directory."
+  ],
+  "existingImplementationCheck": {
+    "checkedAt": "2026-09-17",
+    "result": "NO_EXISTING_IMPLEMENTATION",
+    "detail": "The colony-kernel directory did not exist before this mission; created fresh."
+  },
+  "milestoneScope": "Milestone 1A only: deterministic local core, FakeAgentRuntime, InMemoryColonyStorage, no DSH import, no network, no model calls. Independent reviews remain required before Milestone 2 live DSH integration (Captain decision) and are PENDING_RATE_LIMIT, preserved untouched at independent-reviews-v2."
+}

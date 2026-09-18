@@ -1,0 +1,25 @@
+{
+  "name": "colony-kernel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src tests",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "test": "vitest run",
+    "demo": "npm run -s build && node dist/demo/run-demo.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "22.20.3",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "eslint": "10.10.0",
+    "prettier": "3.9.7",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1"
+  }
+}

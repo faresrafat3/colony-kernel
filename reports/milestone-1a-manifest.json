@@ -1,0 +1,356 @@
+{
+  "milestone": "Milestone 1A — deterministic Colony Kernel core",
+  "node": "v26.8.2",
+  "npm": "11.19.1",
+  "os": "Linux 7.0.0-31-generic x86_64",
+  "packageLockSha256": "f13a57fd571abb63434975ef53b9706413a4ad4f1b554822a29d3329a2013d93",
+  "runtimeDependencies": {},
+  "devDependencies": {
+    "@types/node": "22.20.3",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "eslint": "10.10.0",
+    "prettier": "3.9.7",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1"
+  },
+  "normativeInputs": {
+    "docs/colony-kernel-v0.1.1.md": "d3c8e715c09c446c2934d1177bb86b3f762e7cce055d28f0fa2739dc8b1af841",
+    "docs/colony-skeleton-handoff-v0.1.1.md": "ed15ef7b5cb5e7c2b443b5f13f42f9ebe43439744efb9480e99350d80a2745c1",
+    "docs/colony-kernel-v0.1.md": "ff2356e82d693229aa4509c0d1b8021d3453d0b3b3c806b78897c1d502d208a5"
+  },
+  "tests": {
+    "total": 66,
+    "passed": 66,
+    "failed": 0,
+    "runs": 2,
+    "run1": "Tests  66 passed (66)",
+    "run2": "Tests  66 passed (66)",
+    "perTest": [
+      "D. artifacts D-01: finalized artifact is content-addressed (sha256 over canonical bytes)",
+      "D. artifacts D-02: finalized artifact is immutable — replacement with different content refuses",
+      "D. artifacts D-03: altered content produces a different hash; equal content equal hash",
+      "D. artifacts D-04: identical re-finalization is idempotent (no duplicate rows)",
+      "E. budgets E-01: reserve/settle transfers reserved→spent atomically",
+      "E. budgets E-02: over-reservation is prevented (no overspend at any commit)",
+      "E. budgets E-03: release returns capacity without touching spent",
+      "E. budgets E-04: approved top-up raises effectiveLimit; settlement history unchanged",
+      "E. budgets E-05: immutableLimit mutation is INTEGRITY_FAILURE with a durable event",
+      "E. budgets E-06: revision_cycles cannot be topped up (TOPUP_FORBIDDEN)",
+      "E. budgets E-07: hard exhaustion blocks further execution",
+      "E. budgets E-08: ledger CAS version conflict on stale row (optimistic concurrency)",
+      "E. budgets E-09: retry with existing reservation reuses it (no double reservation)",
+      "A. state machine A-01: legal happy path transitions succeed and increment stateVersion exactly once per event",
+      "A. state machine A-02: illegal transition (RECON_COMPLETED from CREATED) fails without state change and records durable rejection",
+      "A. state machine A-03: terminal states reject every transition",
+      "A. state machine A-04: every accepted transition is one event with version+1 (no double counting)",
+      "A. state machine A-05: unreachable transition rejection — POLICY_REJECTED cannot re-enter workflow",
+      "A. state machine A-06: bounded plan-rework cycle exhausts at 2 and blocks the third",
+      "A. state machine A-07: pause state HUMAN_REVIEW_REQUIRED permits only abort/fail/recovery",
+      "A. state machine A-08: reserved public states are unreachable (PUBLICATION_DISABLED on public-action events)",
+      "A. state machine A-09: generated table and Mermaid diagram derive from the single edge source",
+      "A. state machine A-10: 22 canonical stages, 40 event types, 5 terminal, 2 pause",
+      "B. events B-01: re-applying the same eventId returns ALREADY_APPLIED with no state change",
+      "B. events B-02: duplicate delivery cannot increment missionSequence (storage unique constraint)",
+      "B. events B-03: missionSequence conflict (gap) fails closed",
+      "B. events B-04: expectedStateVersion mismatch → CONCURRENCY_CONFLICT with no effects",
+      "B. events B-05: unknown event type fails closed",
+      "B. events B-06: payload-hash mismatch is rejected (tamper detection)",
+      "B. events B-07: event for another mission is rejected",
+      "B. events B-08: unsupported event schemaVersion fails closed",
+      "B. events B-09: equal canonical payloads produce equal payload hashes (A12 core)",
+      "H. recovery H-01: event replay reconstructs identical state (A24 core)",
+      "H. recovery H-02: replay is byte-stable and idempotent (repeated recovery adds nothing)",
+      "H. recovery H-03: crash after artifact finalization but before the event is harmless",
+      "H. recovery H-04: reducer from empty seed over full stream matches stored state exactly",
+      "H. recovery H-05: recovery events cannot bypass pause guards (RECOVERY_COMPLETED outside pause is COMMON-self only)",
+      "I. isolation model I-01: two missions never share mutable state; sequences and versions are independent",
+      "I. isolation model I-02: an artifact from one mission cannot authorize another (mission binding)",
+      "I. isolation model I-03: artifacts are namespaced per mission; no cross-mission artifact leaks",
+      "I. isolation model I-04: second writer fails lease acquisition (single-writer enforcement, A26)",
+      "C. approvals C-01: valid approval authorizes exactly its bound transition (consumed once)",
+      "C. approvals C-02: changed artifact bytes invalidate the approval (STALE at consumption)",
+      "C. approvals C-03: changed mission state invalidates the approval (state version binding)",
+      "C. approvals C-04: expired approval is rejected at commit (EXPIRED_AT_COMMIT, durable record)",
+      "C. approvals C-05: cross-mission replay is rejected (missionId inside hashed subject)",
+      "C. approvals C-06: purpose mismatch cannot authorize another gate (PLAN vs PACKAGE)",
+      "C. approvals C-07: agent identity cannot approve (self-approval prevention)",
+      "C. approvals C-08: contradictory decision on the same request is a conflict; identical is idempotent",
+      "C. approvals C-09: canonical subject sort order is (artifactType, artifactId)",
+      "C. approvals C-10: expiry-at-commit — commit past expiresAt is refused, not silently accepted",
+      "F. role boundaries F-01: deny by default — unknown role and ungranted capability are refused",
+      "F. role boundaries F-02: FakeAgentRuntime refuses invocation without matching capability",
+      "F. role boundaries F-03: no role can mutate its own manifest or self-grant (structural ban)",
+      "F. role boundaries F-04: verifier cannot mutate implementation artifacts (scope separation)",
+      "F. role boundaries F-05: reviewer cannot approve its own output (agent identity is not an approver)",
+      "F. role boundaries F-06: no test role has publication capability (A33 posture)",
+      "F. role boundaries F-07: repository/model text cannot grant capabilities (kernel-side checks only)",
+      "G. fake runtime G-01: scripted success returns the predefined artifact deterministically",
+      "G. fake runtime G-02: malformed output surfaces RUNTIME_MALFORMED_OUTPUT (content failure, no blind retry)",
+      "G. fake runtime G-03: scripted timeout surfaces RUNTIME_TIMEOUT",
+      "G. fake runtime G-04: scripted refusal surfaces RUNTIME_REFUSAL with structured detail",
+      "G. fake runtime G-05: infrastructure failure surfaces RUNTIME_INFRASTRUCTURE_FAILURE",
+      "G. fake runtime G-06: duplicate invocation yields identical fingerprint (dedupe basis)",
+      "G. fake runtime G-07: invocation history is recorded with outcome classes",
+      "G. fake runtime G-08: runtime performs no I/O — module imports contain no node:fs/net/http"
+    ]
+  },
+  "demo": {
+    "missionId": "mission-0001-3093e5a6",
+    "acceptedEvents": 23,
+    "finalStage": "CLOSED",
+    "finalStateVersion": 23,
+    "eventLogHash": "3098dcc2c7038e4309f922e5eeea75acfb2efdcdd6658bf79d703f41a39901a1",
+    "byteIdenticalReruns": 2
+  },
+  "qualityGates": {
+    "typescriptCompile": "PASS",
+    "lint": "PASS (0 errors)",
+    "tests": "PASS 66/66 twice",
+    "demoTwiceIdentical": "PASS",
+    "noDshImport": "PASS (grep sweep)",
+    "noNetwork": "PASS (no net/http/fetch/URLs)",
+    "noModelCall": "PASS (FakeAgentRuntime only)",
+    "specsUnmodified": "PASS (hashes match)",
+    "noPublicAction": "PASS (PUBLICATION_DISABLED)",
+    "sourcesUnderColonyKernel": "PASS",
+    "schemaVersionEveryPersistedType": "PASS",
+    "stateChangesViaEvents": "PASS",
+    "noUnresolvedP0": "PASS (M1A surface)",
+    "deferredDocumented": "PASS",
+    "independentReviewPending": "PASS (PENDING_RATE_LIMIT)"
+  },
+  "independentReviewStatus": "PENDING_RATE_LIMIT",
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 50,
+      "sha256": "aba500705c7a7ad2c3e4ac7fed60e9e54b2bdf2d62287dc775772cfe9715e2b6"
+    },
+    {
+      "path": ".prettierrc.json",
+      "bytes": 138,
+      "sha256": "a55cd7b102c3494ea17f5c63b39b15ca063f4846712e8c53475f8ecbf8f157b9"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1331,
+      "sha256": "16ecbd53184fd00be5545315e641b42d18020f490e1d17750bdc9fa13c1bee7f"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 3561,
+      "sha256": "c918ac1e5ebd963387e227e2f369787c4894b7b5feac75ce04c13023e32d9aa1"
+    },
+    {
+      "path": "docs/IMPLEMENTATION_STATUS.md",
+      "bytes": 4220,
+      "sha256": "8aaae9b97ca84ece035b27ccd7654d99777983fab8534171c19b5aed76c3c45d"
+    },
+    {
+      "path": "docs/INPUT_MANIFEST.json",
+      "bytes": 1451,
+      "sha256": "7a21b7b11092d9059484195b83c919e5b997a0a282828ff3f6daae165024495e"
+    },
+    {
+      "path": "docs/SPEC_DEVIATIONS.md",
+      "bytes": 3379,
+      "sha256": "f94052e490e471ec653a3328a957515cedfe352df38ae04861231ec127cf5f54"
+    },
+    {
+      "path": "docs/TEST_TRACEABILITY.md",
+      "bytes": 11857,
+      "sha256": "22ad7c8b3331aece3e568c1cb260fcb2326d26927d254fbe74fd0cfc08446593"
+    },
+    {
+      "path": "eslint.config.mjs",
+      "bytes": 826,
+      "sha256": "7b9dadd8070fee4ade5705b4107fe63d5ba08ef82a56b516938d424d6f88a3ad"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 82889,
+      "sha256": "f13a57fd571abb63434975ef53b9706413a4ad4f1b554822a29d3329a2013d93"
+    },
+    {
+      "path": "package.json",
+      "bytes": 679,
+      "sha256": "a8c38bcad52fea579999cd2bff4c4a8788a8ec45986c42f709db3b91ccdbd34f"
+    },
+    {
+      "path": "reports/MILESTONE_1A_VERIFICATION.md",
+      "bytes": 3424,
+      "sha256": "6dd437fcf15edc8f22dafdb47c5565627c0babde4bb55010e081a1d2c95891de"
+    },
+    {
+      "path": "reports/milestone-1a-manifest.json",
+      "bytes": 15800,
+      "sha256": "c3419b6cf6282f04ff7bef251e746516b4460ab27df7f8b100a6e604eb0ea838"
+    },
+    {
+      "path": "src/adapters/fake-agent-runtime.ts",
+      "bytes": 4194,
+      "sha256": "dac0de3ac44df2a8ee56b8f7313650ba62e4a032f168381fb21856ea260c461a"
+    },
+    {
+      "path": "src/adapters/in-memory-storage.ts",
+      "bytes": 16348,
+      "sha256": "8adb3305ad3b353d43f609808dfa18d650d8d08f829d5441157d407a3483475b"
+    },
+    {
+      "path": "src/adapters/kernel-adapters.ts",
+      "bytes": 3107,
+      "sha256": "b1b82ca906c11d06b7124f92bcd594f915466e88dc12d57af55d20d91a687887"
+    },
+    {
+      "path": "src/application/colony-kernel.ts",
+      "bytes": 35905,
+      "sha256": "671f72b131948f4cebf0a3d505a9c6f56c11636a852d2ffa4debe51188310d1d"
+    },
+    {
+      "path": "src/demo/run-demo.ts",
+      "bytes": 10705,
+      "sha256": "ff495bd426ee8e5885e1e0b8fc34e4bdd4bba5ea220298ed6f2d41f722409483"
+    },
+    {
+      "path": "src/domain/approvals/approval.ts",
+      "bytes": 2881,
+      "sha256": "b09bc4fffc00b55e4e8872dfb9237a8d53f5fe7f0493a4f75f3bc9f54487953e"
+    },
+    {
+      "path": "src/domain/artifacts/artifact.ts",
+      "bytes": 1906,
+      "sha256": "9a5acbf2b668fdc3e84df457d2a75f5f25dbb4b738d2eeb894833a47f72873f7"
+    },
+    {
+      "path": "src/domain/budgets/ledger.ts",
+      "bytes": 5209,
+      "sha256": "34d533e0b8881439157b29e23b0ede09edd9c868d6939eae74048d7f5b29cec9"
+    },
+    {
+      "path": "src/domain/canonical/jcs.ts",
+      "bytes": 2857,
+      "sha256": "627ee67113925fd2711864007c38e4c0fbe38a7391820db960fadad78622546d"
+    },
+    {
+      "path": "src/domain/capabilities/registry.ts",
+      "bytes": 5094,
+      "sha256": "1ff91b70718abbc5081dd33f5e72e3d1d723f6dde6e280ad97adae54c30bb5b4"
+    },
+    {
+      "path": "src/domain/errors/kernel-error.ts",
+      "bytes": 2428,
+      "sha256": "7eaec44ed93645c829dd5e151a3a0fc7f64920fdbe08a1660b5d216311a08255"
+    },
+    {
+      "path": "src/domain/events/apply-event.ts",
+      "bytes": 5864,
+      "sha256": "f1b2f84ebf6d11da2525b0c3b6ad815edf59d7844f80ad4fc58210c79832c526"
+    },
+    {
+      "path": "src/domain/events/envelope.ts",
+      "bytes": 1098,
+      "sha256": "25b449fd1671bee6eba49f4feef67195cf69eaa2e1ba27b0a027485b6a7b0764"
+    },
+    {
+      "path": "src/domain/events/vocabulary.ts",
+      "bytes": 2795,
+      "sha256": "550401407ae21ae99f9af48ee37a3327574c30f3b06264eec6f6d58190984a01"
+    },
+    {
+      "path": "src/domain/mission/mission-state.ts",
+      "bytes": 1975,
+      "sha256": "5432124514a43b450d9f85bda3700048918b53c262d39709811d27a8209de135"
+    },
+    {
+      "path": "src/domain/mission/stages.ts",
+      "bytes": 2226,
+      "sha256": "ca72df793bef6428ab8ba214cb76868a36b0c15b5812c391e3b453ecc9c63565"
+    },
+    {
+      "path": "src/domain/mission/state-machine.ts",
+      "bytes": 15363,
+      "sha256": "0288a58661bb095e71b8b6d5c60ca7b36883eaeb3503e13a0f12b8a8ed43cffa"
+    },
+    {
+      "path": "src/domain/revisions/revision.ts",
+      "bytes": 1131,
+      "sha256": "15ea4e14cd8f837cfd8d27be7524559cb11e70480dfebb45e7deefb7c8d4ca09"
+    },
+    {
+      "path": "src/domain/support/sha256.ts",
+      "bytes": 3560,
+      "sha256": "f13dbda13094a34e1ac133b753584e4f72d00ae5b97f767f18d84719991f71a3"
+    },
+    {
+      "path": "src/ports/agent-runtime.ts",
+      "bytes": 1817,
+      "sha256": "a238ae5b8baaab76cb7fea62f01ccb073c7f838be88d4c6208fd12239fa96693"
+    },
+    {
+      "path": "src/ports/kernel-ports.ts",
+      "bytes": 1005,
+      "sha256": "6dd502e74fc3b640c2835e57c8234a80015f259e3c99b007b072c276add09983"
+    },
+    {
+      "path": "src/ports/storage.ts",
+      "bytes": 3471,
+      "sha256": "438b0418f9105218689c7fc33ab70995f88a12a2df32f436bab7cd010a48f640"
+    },
+    {
+      "path": "src/testing/builders/test-kernel.ts",
+      "bytes": 3590,
+      "sha256": "0eed3caaaab3ab9d66285b7870fd830be41d4864a29a03304759fc6c714f5e1f"
+    },
+    {
+      "path": "tests/contracts/artifacts-budgets.test.ts",
+      "bytes": 10202,
+      "sha256": "aa2f41b94aeb3913f1d95c3503744060a70738ccadd70a01f54f22b26655fc19"
+    },
+    {
+      "path": "tests/recovery/recovery-isolation.test.ts",
+      "bytes": 6594,
+      "sha256": "a7365d4c3121c4b5b01aa4bdd2db630701931b86f761ad8c391295e3d6b971f0"
+    },
+    {
+      "path": "tests/security/approvals.test.ts",
+      "bytes": 9150,
+      "sha256": "598a7fbee914144b3f73600bb365c940d159610a8f3ac49db1dc81d266f3a91a"
+    },
+    {
+      "path": "tests/security/roles-runtime.test.ts",
+      "bytes": 10301,
+      "sha256": "1ba3b8796432fb58860f26c56dd74ad2483fe99af98e20e1699c5da059ffb52b"
+    },
+    {
+      "path": "tests/transitions/state-machine.test.ts",
+      "bytes": 8999,
+      "sha256": "bdb9bdf0e1056357171eb4b1a3082de68b35721f7d5c2d46cbdcec32a6e9123a"
+    },
+    {
+      "path": "tests/unit/events.test.ts",
+      "bytes": 6589,
+      "sha256": "21102d61753955bd435554f892910e6056789626a1393e6d77d638b650618156"
+    },
+    {
+      "path": "tsconfig.build.json",
+      "bytes": 186,
+      "sha256": "24031789a3279e66fb036e95e5f0daa1ac759666102e2acbde6862bf8da25ef2"
+    },
+    {
+      "path": "tsconfig.json",
+      "bytes": 662,
+      "sha256": "e3d5dd9529cc79ca9ca5c25e29f9a70d68b25dc7ede1ac79f5f2f95614f8a65f"
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 398,
+      "sha256": "6ad9a8e0a72a62aa1f903c9a78cd4791bd67c897c927b4d637710b76c73747f8"
+    }
+  ],
+  "preservationCheck": {
+    "normativeInputsUnchanged": true,
+    "mismatches": []
+  },
+  "independentReviewUntouched": true
+}
