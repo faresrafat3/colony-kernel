@@ -25,5 +25,5 @@
     "result": "NO_EXISTING_IMPLEMENTATION",
     "detail": "The colony-kernel directory did not exist before this mission; created fresh."
   },
-  "milestoneScope": "Milestone 1A only: deterministic local core, FakeAgentRuntime, InMemoryColonyStorage, no DSH import, no network, no model calls. Independent reviews remain required before Milestone 2 live DSH integration (Captain decision) and are PENDING_RATE_LIMIT, preserved untouched at independent-reviews-v2."
+  "milestoneScope": "Milestone 1A only: deterministic local core, FakeAgentRuntime, InMemoryColonyStorage, no DSH import, no network, no model calls. Independent reviews remain required before Milestone 2 live DSH integration (Captain decision) and are PENDING_RATE_LIMIT; the review workspace is external to this repository and was left untouched."
 }

@@ -59,5 +59,6 @@ discrepancy is recorded, not resolved.
   verification.
 - `reports/milestone-1a-manifest.json` lists all 43 files with byte counts and
   SHA-256, plus the per-test names that actually ran.
-- Independent review remains **PENDING_RATE_LIMIT**; `independent-reviews-v2/`
-  was not modified and no Union Alpha review was retried during this mission.
+- Independent review remains **PENDING_RATE_LIMIT**; the review workspace is
+  external to this repository, was not modified, and no review was retried
+  during this mission.

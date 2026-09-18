@@ -7,7 +7,8 @@ specification (`docs/colony-kernel-v0.1.1.md`, hash-pinned in
 
 ## R1 — Two-copy workflow
 
-- `anatomy-lab/colony-kernel` (owner's machine) is the **lab working copy**.
+- The **lab working copy** lives on the owner's machine (currently
+  `~/anatomy-lab/colony-kernel`) and is not part of this repository.
 - `Projects/colony-kernel` is the **published repository** (origin:
   `faresrafat3/colony-kernel`).
 - Work happens in the lab copy first; the published copy receives it only

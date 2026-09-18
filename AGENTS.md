@@ -83,8 +83,9 @@ Implement a port:
 
 1. `git status` must be clean; `git pull --ff-only origin main`.
 2. `npm ci && npm run verify` — if green, your copy is current and healthy.
-3. Make changes in the lab copy first (`~/anatomy-lab/colony-kernel`); copy
-   into this repo only after the gates pass there (R1).
+3. Make changes in the lab working copy first (owner's machine — see
+   GOVERNANCE R1 for the two-copy model); copy into this repo only after the
+   gates pass there (R1).
 4. Ship: `npm run verify` here → commit (message states what and why, with
    evidence) → push → `git tag vX.Y.Z` → GitHub release with notes from
    `CHANGELOG.md`.
