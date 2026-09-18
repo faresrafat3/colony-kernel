@@ -1,6 +1,13 @@
 # Colony Kernel
 
+[![verify](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml/badge.svg)](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen.svg)](package.json)
+[![deps](https://img.shields.io/badge/runtime%20deps-0-success.svg)](package.json)
+
 A deterministic mission-control kernel for AI-agent colonies: models propose, only the kernel commits.
+
+**Start here if you are an agent:** [AGENTS.md](AGENTS.md) — the boot contract (one-command verify, hard rules, repo map, update-and-ship recipe).
 
 Agents (planners, craftsmen, verifiers, reviewers) can *suggest* work; every state change, permission, budget, and human approval flows through an auditable, fail-closed core. A model saying "this passed" is never treated as a verification result.
 

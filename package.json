@@ -10,7 +10,8 @@
     "lint": "eslint src tests",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test": "vitest run",
-    "demo": "npm run -s build && node dist/demo/run-demo.js"
+    "demo": "npm run -s build && node dist/demo/run-demo.js",
+    "verify": "bash scripts/verify.sh"
   },
   "dependencies": {},
   "devDependencies": {
