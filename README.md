@@ -66,6 +66,10 @@ Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memor
 | `docs/INPUT_MANIFEST.json` | SHA-256 of the normative inputs |
 | `reports/MILESTONE_1A_VERIFICATION.md` | Verification record incl. self-hash manifest |
 
+## Governance
+
+Standing laws for contributors and agent sessions: [GOVERNANCE.md](GOVERNANCE.md) — two-copy workflow, non-negotiable gates, append-only history, read-only spec, honest labeling.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
