@@ -1,9 +1,6 @@
 # Colony Kernel
 
-[![verify](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml/badge.svg)](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen.svg)](package.json)
-[![deps](https://img.shields.io/badge/runtime%20deps-0-success.svg)](package.json)
+[![verify](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml/badge.svg)](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml) [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen.svg)](package.json) [![deps](https://img.shields.io/badge/runtime%20deps-0-success.svg)](package.json)
 
 A deterministic mission-control kernel for AI-agent colonies: models propose, only the kernel commits.
 
@@ -15,14 +12,14 @@ Agents (planners, craftsmen, verifiers, reviewers) can *suggest* work; every sta
 
 ## Why
 
-Multi-agent frameworks (orchestrators, graphs, crews) let the LLM drive the workflow state. That makes the workflow only as reliable as the model. Colony Kernel inverts the trust boundary:
+Multi-agent frameworks (orchestrators, graphs, crews) let the LLM drive workflow state — workflow only as reliable as the model. Colony inverts the trust boundary:
 
-- A **22-stage state machine** with a default-deny edge table — any transition not explicitly allowed is illegal.
-- An **apply-once event reducer**: every accepted event carries a canonical payload hash, a CAS state version, and a monotonic sequence. Replay reconstructs identical state.
-- **Content-addressed approvals** (SHA-256 over RFC 8785 JCS canonical bytes) bound to the exact transition they authorize, consumed at most once, expired at commit time.
-- A **budget ledger** with immutable limits and compare-and-swap rows — agents cannot mint resources.
-- **Deny-by-default roles**: agents have no self-mutation and no publication capability; reserved public states are unreachable (`PUBLICATION_DISABLED`).
-- **Durable rejections**: every refused command leaves evidence instead of mutating state.
+- **22-stage state machine**, default-deny edge table — unlisted transitions illegal.
+- **Apply-once event reducer**: accepted events carry canonical hash + CAS version + monotonic sequence; replay reconstructs identical state.
+- **Content-addressed approvals** (SHA-256 over RFC 8785 JCS bytes) bound to exact transition, consumed ≤1, expired at commit.
+- **Budget ledger**, immutable limits + CAS rows — agents can't mint resources.
+- **Deny-by-default roles** — no self-mutation/publication; reserved public states unreachable (`PUBLICATION_DISABLED`).
+- **Durable rejections** — refused commands leave evidence, never mutate state.
 
 ## Commands
 
