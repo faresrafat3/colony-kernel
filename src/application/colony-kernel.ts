@@ -117,6 +117,32 @@ export class ColonyKernel {
     };
   }
 
+  /**
+   * One home for the per-command transition entry (ARCHITECTURE.md, "Control flow
+   * of one command": … → telemetry record → return). A command that commits
+   * through {@link commit} gets this for free; a command that must commit through
+   * `storage.atomicApply` itself calls it explicitly. Telemetry is a derived view
+   * and never authorizes anything (v0.1 §15), so emitting it cannot change a gate.
+   */
+  private noteTransition(missionId: string, state: MissionState, appended: number): void {
+    this.telemetry.record({
+      kind: "transition",
+      missionId,
+      code: state.stage,
+      detail: { stateVersion: state.stateVersion, events: appended },
+    });
+  }
+
+  /** The approval-gate entry both human gates emit once their request committed. */
+  private noteApprovalRequested(missionId: string, request: ApprovalRequest): void {
+    this.telemetry.record({
+      kind: "approval",
+      missionId,
+      code: "APPROVAL_REQUESTED",
+      detail: { subjectHash: approvalSubjectHash(request) },
+    });
+  }
+
   /** Commit an event batch atomically; telemetry + durable rejection on failure. */
   private commit(
     missionId: string,
@@ -159,12 +185,7 @@ export class ColonyKernel {
       throw result.error;
     }
     const state = result.value.state;
-    this.telemetry.record({
-      kind: "transition",
-      missionId,
-      code: state.stage,
-      detail: { stateVersion: state.stateVersion, events: result.value.appended },
-    });
+    this.noteTransition(missionId, state, result.value.appended);
     return state;
   }
 
@@ -172,8 +193,6 @@ export class ColonyKernel {
 
   createMission(input: { title: string; correlationId?: string }): { missionId: string; state: MissionState } {
     const missionId = this.ids.nextId("mission");
-    const state0 = initialMissionState({ missionId, title: input.title, createdAt: this.now() });
-    const created = initialMissionState({ missionId, title: input.title, createdAt: state0.createdAt });
     const envelope: EventEnvelope = {
       schemaVersion: 1,
       eventId: this.ids.nextUuid(),
@@ -192,7 +211,6 @@ export class ColonyKernel {
     };
     const applied = this.storage.atomicApply(missionId, [envelope], 0, applyEvent);
     if (!applied.ok) throw applied.error;
-    void created;
     this.telemetry.record({ kind: "transition", missionId, code: "CREATED", detail: {} });
     return { missionId, state: applied.value.state };
   }
@@ -274,18 +292,24 @@ export class ColonyKernel {
 
   // ── approvals (N1) ─────────────────────────────────────────────────────
 
-  requestPlanApproval(input: { missionId: string; artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number }): ApprovalRequest {
-    const state = this.current(input.missionId);
-    if (state.stage !== "AWAITING_PLAN_APPROVAL") {
-      throw new KernelError("ILLEGAL_TRANSITION", `approval requests originate from AWAITING_PLAN_APPROVAL, not ${state.stage}`, {});
-    }
+  /**
+   * One home for the approval-request shape both human gates issue. Only the
+   * purpose and the guarded exit differ; every other field is N1-invariant.
+   * `approvalSubjectHash` covers all of it, so callers must not mutate the result.
+   */
+  private openApprovalRequest(
+    state: MissionState,
+    input: { artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number },
+    purpose: ApprovalPurpose,
+    toState: string,
+  ): { request: ApprovalRequest; envelope: EventEnvelope } {
     const request: ApprovalRequest = {
       schemaVersion: 1,
       approvalRequestId: this.ids.nextUuid(),
       missionId: state.missionId,
       missionStateVersion: state.stateVersion,
-      requestedTransition: { fromState: state.stage, toState: "IMPLEMENTATION" },
-      approvalPurpose: "PLAN_APPROVAL",
+      requestedTransition: { fromState: state.stage, toState },
+      approvalPurpose: purpose,
       actionClass: "LOCAL_WRITE",
       requestedByRole: input.requestedByRole,
       requiredHumanAuthority: HUMAN_AUTHORITY,
@@ -296,18 +320,44 @@ export class ColonyKernel {
       expiresAt: new Date(this.clock.now().getTime() + input.ttlMs).toISOString(),
       nonce: this.ids.nextNonce(),
     };
-    const subjectHash = approvalSubjectHash(request);
     const envelope = this.envelope(
       ET.APPROVAL_REQUESTED,
       state,
       this.actorFor(input.requestedByRole.roleId, "ADMITTED_INVOCATION", input.requestedByRole.roleId),
-      { approvalRequestId: request.approvalRequestId, approvalSubjectHash: subjectHash, purpose: request.approvalPurpose },
+      { approvalRequestId: request.approvalRequestId, approvalSubjectHash: approvalSubjectHash(request), purpose: request.approvalPurpose },
       { correlationId: this.ids.nextId("corr"), idempotencyKey: `approval:${request.approvalRequestId}:requested` },
     );
+    return { request, envelope };
+  }
+
+  /** One home for the record shape both approval-decision paths store. */
+  private buildApprovalRecord(
+    request: ApprovalRequest,
+    input: { decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string },
+  ): ApprovalRecord {
+    return {
+      schemaVersion: 1,
+      approvalRecordId: this.ids.nextUuid(),
+      approvalRequestId: request.approvalRequestId,
+      approvalSubjectHash: approvalSubjectHash(request),
+      decision: input.decision,
+      decidedBy: input.decidedBy,
+      decidedAt: this.now(),
+      authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
+      optionalReason: input.reason ?? null,
+    };
+  }
+
+  requestPlanApproval(input: { missionId: string; artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number }): ApprovalRequest {
+    const state = this.current(input.missionId);
+    if (state.stage !== "AWAITING_PLAN_APPROVAL") {
+      throw new KernelError("ILLEGAL_TRANSITION", `approval requests originate from AWAITING_PLAN_APPROVAL, not ${state.stage}`, {});
+    }
+    const { request, envelope } = this.openApprovalRequest(state, input, "PLAN_APPROVAL", "IMPLEMENTATION");
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);
     if (!committed.ok) throw committed.error;
     unwrap(this.storage.createApprovalRequest(request));
-    this.telemetry.record({ kind: "approval", missionId: input.missionId, code: "APPROVAL_REQUESTED", detail: { subjectHash } });
+    this.noteApprovalRequested(input.missionId, request);
     return request;
   }
 
@@ -324,17 +374,7 @@ export class ColonyKernel {
     if (existing !== undefined && existing.decision === input.decision) {
       return existing;
     }
-    const record: ApprovalRecord = {
-      schemaVersion: 1,
-      approvalRecordId: this.ids.nextUuid(),
-      approvalRequestId: request.approvalRequestId,
-      approvalSubjectHash: approvalSubjectHash(request),
-      decision: input.decision,
-      decidedBy: input.decidedBy,
-      decidedAt: this.now(),
-      authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
-      optionalReason: input.reason ?? null,
-    };
+    const record = this.buildApprovalRecord(request, input);
     unwrap(this.storage.recordApprovalDecision(record));
     const state = this.current(request.missionId);
     const envelope = this.envelope(
@@ -394,17 +434,7 @@ export class ColonyKernel {
   recordApprovalDecisionRaw(input: { approvalRequestId: string; decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string }): ApprovalRecord {
     const request = unwrap(this.storage.getApprovalRequest(input.approvalRequestId));
     if (request === undefined) throw new KernelError("APPROVAL_NOT_FOUND", `approval ${input.approvalRequestId} not found`, {});
-    const record: ApprovalRecord = {
-      schemaVersion: 1,
-      approvalRecordId: this.ids.nextUuid(),
-      approvalRequestId: request.approvalRequestId,
-      approvalSubjectHash: approvalSubjectHash(request),
-      decision: input.decision,
-      decidedBy: input.decidedBy,
-      decidedAt: this.now(),
-      authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
-      optionalReason: input.reason ?? null,
-    };
+    const record = this.buildApprovalRecord(request, input);
     const stored = this.storage.recordApprovalDecision(record);
     if (!stored.ok) throw stored.error;
     return record;
@@ -426,7 +456,8 @@ export class ColonyKernel {
         contentBytes: new TextEncoder().encode(canonicalArtifactContent(a.content)).length,
       };
     }
-    void this.current(input.missionId);
+    // Precondition: the mission must exist before an artifact can be finalized.
+    this.current(input.missionId);
     const role = this.roles.role(input.roleId);
     const contentSha256 = sha256Hex(canonicalArtifactContent(input.content));
     const artifactId = input.artifactId ?? this.ids.nextId("artifact");
@@ -450,7 +481,7 @@ export class ColonyKernel {
       payload["bindSlot"] = input.slot;
       payload["bindSubjectSha256"] = contentSha256;
     }
-    const committed = this.commit(input.missionId, (s) => ({
+    this.commit(input.missionId, (s) => ({
       events: [
         this.envelope(ET.ARTIFACT_FINALIZED, s, this.actorFor(input.roleId, "ADMITTED_INVOCATION", input.roleId), payload, {
           correlationId: this.ids.nextId("corr"),
@@ -458,7 +489,6 @@ export class ColonyKernel {
         }),
       ],
     }));
-    void committed;
     return { manifest, contentSha256 };
   }
 
@@ -559,8 +589,8 @@ export class ColonyKernel {
 
   /** Forbidden limit mutation attempt → INTEGRITY_FAILURE + durable event (N4 req 2). */
   attemptLimitMutation(missionId: string, resourceClass: ResourceClass, newLimit: number): never {
-    const ledger = this.ledger(missionId, resourceClass);
-    void ledger;
+    // Precondition: the ledger must exist; the limit itself stays immutable.
+    this.ledger(missionId, resourceClass);
     unwrap(this.storage.recordRejection({
       missionId,
       scope: "budget",
@@ -607,6 +637,7 @@ export class ColonyKernel {
     );
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);
     if (!committed.ok) throw committed.error;
+    this.noteTransition(input.missionId, committed.value.state, committed.value.appended);
     return request;
   }
 
@@ -668,33 +699,11 @@ export class ColonyKernel {
     if (state.stage !== "AWAITING_PUBLISH_APPROVAL") {
       throw new KernelError("ILLEGAL_TRANSITION", `package approval originates from AWAITING_PUBLISH_APPROVAL, not ${state.stage}`, {});
     }
-    const request: ApprovalRequest = {
-      schemaVersion: 1,
-      approvalRequestId: this.ids.nextUuid(),
-      missionId: state.missionId,
-      missionStateVersion: state.stateVersion,
-      requestedTransition: { fromState: state.stage, toState: "READY_TO_PUBLISH" },
-      approvalPurpose: "PACKAGE_APPROVAL",
-      actionClass: "LOCAL_WRITE",
-      requestedByRole: input.requestedByRole,
-      requiredHumanAuthority: HUMAN_AUTHORITY,
-      artifactSubjects: sortArtifactSubjects(input.artifactSubjects),
-      policyVersion: "v0.1.1",
-      roleVersions: { "first-mate": 1, craftsman: 1, verifier: 1, reviewer: 1 },
-      issuedAt: this.now(),
-      expiresAt: new Date(this.clock.now().getTime() + input.ttlMs).toISOString(),
-      nonce: this.ids.nextNonce(),
-    };
-    const envelope = this.envelope(
-      ET.APPROVAL_REQUESTED,
-      state,
-      this.actorFor(input.requestedByRole.roleId, "ADMITTED_INVOCATION", input.requestedByRole.roleId),
-      { approvalRequestId: request.approvalRequestId, approvalSubjectHash: approvalSubjectHash(request), purpose: request.approvalPurpose },
-      { correlationId: this.ids.nextId("corr"), idempotencyKey: `approval:${request.approvalRequestId}:requested` },
-    );
+    const { request, envelope } = this.openApprovalRequest(state, input, "PACKAGE_APPROVAL", "READY_TO_PUBLISH");
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);
     if (!committed.ok) throw committed.error;
     unwrap(this.storage.createApprovalRequest(request));
+    this.noteApprovalRequested(input.missionId, request);
     return request;
   }
 

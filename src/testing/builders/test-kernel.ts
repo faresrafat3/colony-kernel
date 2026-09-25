@@ -4,6 +4,7 @@ import { InMemoryColonyStorage } from "../../adapters/in-memory-storage.js";
 import type { SteppingClock } from "../../adapters/kernel-adapters.js";
 import { DeterministicClock, DeterministicIdGenerator, InMemoryTelemetry } from "../../adapters/kernel-adapters.js";
 import { FakeAgentRuntime, type ScriptedResponse } from "../../adapters/fake-agent-runtime.js";
+import type { ApprovalRequest } from "../../domain/approvals/approval.js";
 
 export const FIXED_INSTANT = new Date(Date.UTC(2026, 8, 17, 12, 0, 0));
 export const TEST_SEED = "colony-kernel-test-seed";
@@ -67,6 +68,57 @@ export function toImplementation(k: TestKernel): { missionId: string; planArtifa
     slot: "candidate",
   });
   return { missionId, planArtifactId, planSha, candidateArtifactId: candidate.manifest.artifactId, candidateSha: candidate.contentSha256 };
+}
+
+/**
+ * Drive a mission to AWAITING_PUBLISH_APPROVAL and issue the package request.
+ * Binds to a real subject set, so the gate's request is bound to what the
+ * mission actually produced (no hand-built subjects).
+ */
+export function toPackageGate(k: TestKernel): { missionId: string; request: ApprovalRequest } {
+  const { kernel } = k;
+  const { missionId } = toImplementation(k);
+  kernel.finalizeArtifact({
+    missionId,
+    roleId: "verifier",
+    artifactType: "verification_report",
+    content: { fields: { result: "pass" } },
+    slot: "verification",
+  });
+  kernel.completeImplementation(missionId);
+  kernel.completeVerification(missionId);
+  kernel.finalizeArtifact({
+    missionId,
+    roleId: "reviewer",
+    artifactType: "technical_review",
+    content: { fields: { verdict: "approved" } },
+  });
+  kernel.completeTechnicalReview(missionId);
+  kernel.finalizeArtifact({
+    missionId,
+    roleId: "first-mate",
+    artifactType: "documentation_bundle",
+    content: { fields: { changelog: "test fixture" } },
+  });
+  kernel.completeDocumentation(missionId);
+  kernel.completeFinalPolicyGate(missionId, "allowed");
+  // Read through the port, not the concrete adapter: only the port declares the
+  // failure branch, and a test kit must exercise the shape callers really see.
+  const artifacts = k.kernel.storage.listArtifacts(missionId);
+  if (!artifacts.ok) throw artifacts.error;
+  const request = kernel.requestPackageApproval({
+    missionId,
+    artifactSubjects: artifacts.value.map((a) => ({
+      artifactId: a.artifactId,
+      artifactType: a.artifactType,
+      artifactSchemaVersion: 1,
+      contentSha256: a.contentSha256,
+      finalizedAt: a.finalizedAt,
+    })),
+    requestedByRole: { roleId: "first-mate", roleVersion: 1 },
+    ttlMs: 60_000,
+  });
+  return { missionId, request };
 }
 
 function driveRecon(k: TestKernel, missionId: string): string {

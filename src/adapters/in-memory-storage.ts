@@ -6,6 +6,7 @@
  * scope-qualified idempotencyKey, immutable artifacts, single-writer leases.
  */
 import { KernelError } from "../domain/errors/kernel-error.js";
+import { initialMissionState } from "../domain/mission/mission-state.js";
 import type { ColonyStorage, StorageTransaction } from "../ports/storage.js";
 import type { EventEnvelope } from "../domain/events/envelope.js";
 import type { MissionState } from "../domain/mission/mission-state.js";
@@ -68,33 +69,16 @@ export class InMemoryColonyStorage implements ColonyStorage {
         if (expectedStateVersion !== 0 || (events[0]?.eventType ?? "") !== "MISSION_CREATED") {
           throw new KernelError("INVALID_EVENT", `mission ${missionId} not found`, {});
         }
-        // Creation path: reduce over a seed built by the caller's reducer from
-        // the creation event itself.
+        // Creation path: reduce over the domain's one mission seed, titled from
+        // the creation event itself. Never re-spell the state shape here — the
+        // domain factory is its only home.
         const first = events[0];
         if (first === undefined) throw new KernelError("INVALID_EVENT", "empty event batch", {});
-        const seed: MissionState = {
-          schemaVersion: 1,
+        const seed = initialMissionState({
           missionId,
-          stage: "CREATED",
-          stateVersion: 0,
-          missionSequence: 0,
           title: typeof first.payload["title"] === "string" ? (first.payload["title"] as string) : "",
-          resumeStage: null,
-          counters: {
-            revisionCount: 0,
-            planReworkCount: 0,
-            gateReissueCount: 0,
-            verificationInfraRetryCount: 0,
-            textOnlyPackageReworkCount: 0,
-            humanResumptionCount: 0,
-          },
-          boundPlanSha256: null,
-          boundCandidateSha256: null,
-          boundVerificationSha256: null,
-          consumedApprovalSubjectHashes: [],
           createdAt: first.occurredAt,
-          updatedAt: first.occurredAt,
-        };
+        });
         state = seed;
       }
       if (state.stateVersion !== expectedStateVersion) {

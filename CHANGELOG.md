@@ -5,6 +5,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [SemVer](https://semver.org/). The normative specification is versioned
 independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 
+## [Unreleased]
+
+### Added
+
+- `K-01` (`tests/unit/telemetry.test.ts`): asserts the per-command telemetry
+  invariant. Verified to fail with the emission reverted. The test kit gained
+  `toPackageGate`, the first coverage of the publish gate.
+
+### Changed
+
+- Command plumbing de-duplicated: the approval-request and approval-record
+  shapes now have one home each (`openApprovalRequest`, `buildApprovalRecord`);
+  `createMission` no longer builds and discards two `MissionState` seeds; the
+  in-memory creation seed calls the domain `initialMissionState` factory
+  instead of re-spelling the state shape. Demo output is byte-identical.
+- Live test counts updated 66 → 67 (`AGENTS.md`, `README.md`, `GOVERNANCE.md`,
+  `docs/IMPLEMENTATION_STATUS.md`). The Milestone 1A records
+  (`docs/TEST_TRACEABILITY.md`, `reports/**`) stay at 66 by design — they state
+  what M1A verified. `GOVERNANCE.md` is law: this number change belongs in an
+  amendment commit of its own (R-series, per the `AGENTS.md` repo map).
+
+### Fixed
+
+- `requestPackageApproval` and `requestRevision` commit through
+  `storage.atomicApply` directly and emitted no telemetry, so the publish gate
+  and the revision path were unobservable — contradicting
+  `docs/ARCHITECTURE.md` ("Control flow of one command" ends in "telemetry
+  record"). Both now emit like every other command. Telemetry remains a derived
+  view that authorizes nothing (v0.1 §15), so no gate or determinism changes.
+
 ## [0.1.0] — 2026-09-18
 
 ### Added

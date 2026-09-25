@@ -8,7 +8,7 @@ Opening this repo? Read this file first: what is true, what is law, what is off-
 npm run verify
 ```
 
-Typecheck → lint → 66 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` = tree healthy. CI runs same script per push — check latest run before trusting old claims.
+Typecheck → lint → 67 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` = tree healthy. CI runs same script per push — check latest run before trusting old claims.
 
 ## The boot chain
 
@@ -42,7 +42,7 @@ A deterministic mission-control kernel for AI-agent colonies: models propose, on
 | `src/ports/**` | Colony-owned interfaces (storage, runtime, clock, ids, telemetry) — extension seams | Yes |
 | `src/adapters/**` | In-memory storage, fake runtime, deterministic clock/ids | Yes |
 | `src/demo/run-demo.ts` | Seeded deterministic demo; output byte-stable | Yes |
-| `tests/**` | 66 deterministic tests (transitions/contracts/security/recovery/unit) | Yes — new behavior needs tests |
+| `tests/**` | 67 deterministic tests (transitions/contracts/security/recovery/unit) | Yes — new behavior needs tests |
 | `docs/colony-kernel-v0.1.1.md` | Normative spec | **No** (R5) |
 | `docs/*` (status, deviations, traceability, manifest, architecture) | Truth and evidence records | Yes — keep them truthful (R6) |
 | `reports/**` | Verification record + per-file SHA-256 manifest | Append/update with evidence |

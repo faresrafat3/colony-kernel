@@ -11,7 +11,6 @@ import { ColonyKernel } from "../application/colony-kernel.js";
 import { InMemoryColonyStorage } from "../adapters/in-memory-storage.js";
 import { DeterministicClock, DeterministicIdGenerator, InMemoryTelemetry } from "../adapters/kernel-adapters.js";
 import { FakeAgentRuntime, type ScriptedResponse } from "../adapters/fake-agent-runtime.js";
-import { sha256Hex } from "../domain/support/sha256.js";
 import { approvalSubjectHash } from "../domain/approvals/approval.js";
 import { applyEvent } from "../domain/events/apply-event.js";
 import { initialMissionState } from "../domain/mission/mission-state.js";
@@ -38,7 +37,7 @@ export function runDemo(seed: string): DemoOutput {
     runtime: new FakeAgentRuntime(demoScript()),
   });
 
-  const { missionId, state: created } = kernel.createMission({ title: "Fix a controlled bug in a disposable calculator fixture" });
+  const { missionId } = kernel.createMission({ title: "Fix a controlled bug in a disposable calculator fixture" });
 
   kernel.startMission(missionId);
   kernel.completePolicyScreen(missionId, "allowed", { policyVersion: "v0.1.1" });
@@ -52,7 +51,6 @@ export function runDemo(seed: string): DemoOutput {
     input: { objective: "recon calculator bug", inputArtifactIds: [], parameters: {} },
     idempotencyKey: `mission:${missionId}:recon`,
   });
-  const reconContentSha = sha256Hex(JSON.stringify(recon.artifact?.fields ?? {}));
   const reconArtifact = kernel.finalizeArtifact({
     missionId,
     roleId: "first-mate",
@@ -60,7 +58,6 @@ export function runDemo(seed: string): DemoOutput {
     content: recon.artifact ?? { fields: {} },
     slot: undefined,
   });
-  void reconContentSha;
   kernel.completeRecon(missionId, reconArtifact.manifest.artifactId);
 
   const plan = kernel.invokeAgent({
@@ -208,7 +205,6 @@ export function runDemo(seed: string): DemoOutput {
     }
   }
   const artifactsOut = artifacts.value.map((a) => ({ artifactId: a.artifactId, artifactType: a.artifactType, contentSha256: a.contentSha256 }));
-  void created;
   return {
     missionId,
     title: final.title,
