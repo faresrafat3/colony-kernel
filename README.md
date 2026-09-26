@@ -4,6 +4,8 @@
 
 A deterministic mission-control kernel for AI-agent colonies: models propose, only the kernel commits.
 
+**Live site:** [faresrafat3.github.io/colony-kernel](https://faresrafat3.github.io/colony-kernel/) — the proof, not the promise.
+
 **Start here if you are an agent:** [AGENTS.md](AGENTS.md) — the boot contract (one-command verify, hard rules, repo map, update-and-ship recipe).
 
 Agents (planners, craftsmen, verifiers, reviewers) can *suggest* work; every state change, permission, budget, and human approval flows through an auditable, fail-closed core. A model saying "this passed" is never treated as a verification result.
