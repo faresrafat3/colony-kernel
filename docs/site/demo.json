@@ -1,0 +1,220 @@
+{
+  "missionId": "mission-0001-3093e5a6",
+  "title": "Fix a controlled bug in a disposable calculator fixture",
+  "seed": "colony-kernel-m1a-seed-001",
+  "acceptedTransitions": [
+    {
+      "seq": 1,
+      "event": "MISSION_CREATED",
+      "from": "CREATED",
+      "to": "CREATED",
+      "stateVersion": 1
+    },
+    {
+      "seq": 2,
+      "event": "POLICY_SCREEN_STARTED",
+      "from": "CREATED",
+      "to": "POLICY_SCREENING",
+      "stateVersion": 2
+    },
+    {
+      "seq": 3,
+      "event": "POLICY_SCREEN_COMPLETED",
+      "from": "POLICY_SCREENING",
+      "to": "RECONNAISSANCE",
+      "stateVersion": 3
+    },
+    {
+      "seq": 4,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "RECONNAISSANCE",
+      "to": "RECONNAISSANCE",
+      "stateVersion": 4
+    },
+    {
+      "seq": 5,
+      "event": "RECON_COMPLETED",
+      "from": "RECONNAISSANCE",
+      "to": "PLANNING",
+      "stateVersion": 5
+    },
+    {
+      "seq": 6,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "PLANNING",
+      "to": "PLANNING",
+      "stateVersion": 6
+    },
+    {
+      "seq": 7,
+      "event": "PLAN_PROPOSED",
+      "from": "PLANNING",
+      "to": "CHALLENGE",
+      "stateVersion": 7
+    },
+    {
+      "seq": 8,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "CHALLENGE",
+      "to": "CHALLENGE",
+      "stateVersion": 8
+    },
+    {
+      "seq": 9,
+      "event": "PLAN_CHALLENGED",
+      "from": "CHALLENGE",
+      "to": "AWAITING_PLAN_APPROVAL",
+      "stateVersion": 9
+    },
+    {
+      "seq": 10,
+      "event": "APPROVAL_REQUESTED",
+      "from": "AWAITING_PLAN_APPROVAL",
+      "to": "AWAITING_PLAN_APPROVAL",
+      "stateVersion": 10
+    },
+    {
+      "seq": 11,
+      "event": "APPROVAL_RECORDED",
+      "from": "AWAITING_PLAN_APPROVAL",
+      "to": "IMPLEMENTATION",
+      "stateVersion": 11
+    },
+    {
+      "seq": 12,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "IMPLEMENTATION",
+      "to": "IMPLEMENTATION",
+      "stateVersion": 12
+    },
+    {
+      "seq": 13,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "IMPLEMENTATION",
+      "to": "IMPLEMENTATION",
+      "stateVersion": 13
+    },
+    {
+      "seq": 14,
+      "event": "IMPLEMENTATION_COMPLETED",
+      "from": "IMPLEMENTATION",
+      "to": "VERIFICATION",
+      "stateVersion": 14
+    },
+    {
+      "seq": 15,
+      "event": "VERIFICATION_COMPLETED",
+      "from": "VERIFICATION",
+      "to": "TECHNICAL_REVIEW",
+      "stateVersion": 15
+    },
+    {
+      "seq": 16,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "TECHNICAL_REVIEW",
+      "to": "TECHNICAL_REVIEW",
+      "stateVersion": 16
+    },
+    {
+      "seq": 17,
+      "event": "TECHNICAL_REVIEW_COMPLETED",
+      "from": "TECHNICAL_REVIEW",
+      "to": "DOCUMENTATION",
+      "stateVersion": 17
+    },
+    {
+      "seq": 18,
+      "event": "ARTIFACT_FINALIZED",
+      "from": "DOCUMENTATION",
+      "to": "DOCUMENTATION",
+      "stateVersion": 18
+    },
+    {
+      "seq": 19,
+      "event": "DOCUMENTATION_COMPLETED",
+      "from": "DOCUMENTATION",
+      "to": "FINAL_POLICY_GATE",
+      "stateVersion": 19
+    },
+    {
+      "seq": 20,
+      "event": "FINAL_GATE_COMPLETED",
+      "from": "FINAL_POLICY_GATE",
+      "to": "AWAITING_PUBLISH_APPROVAL",
+      "stateVersion": 20
+    },
+    {
+      "seq": 21,
+      "event": "APPROVAL_REQUESTED",
+      "from": "AWAITING_PUBLISH_APPROVAL",
+      "to": "AWAITING_PUBLISH_APPROVAL",
+      "stateVersion": 21
+    },
+    {
+      "seq": 22,
+      "event": "APPROVAL_RECORDED",
+      "from": "AWAITING_PUBLISH_APPROVAL",
+      "to": "READY_TO_PUBLISH",
+      "stateVersion": 22
+    },
+    {
+      "seq": 23,
+      "event": "MISSION_CLOSED",
+      "from": "READY_TO_PUBLISH",
+      "to": "CLOSED",
+      "stateVersion": 23
+    }
+  ],
+  "artifacts": [
+    {
+      "artifactId": "artifact-0001-2cd6a282",
+      "artifactType": "recon_brief",
+      "contentSha256": "938c60ad753b78bc310f3dc2c7060245ec23b4cf1a51455fea29fa2861a710f3"
+    },
+    {
+      "artifactId": "artifact-0002-c56ee72a",
+      "artifactType": "plan",
+      "contentSha256": "477932921c340e0ccf5bd8f67e999e48438b2effa33f1d7b5fb5775bbc9fdb42"
+    },
+    {
+      "artifactId": "artifact-0003-34ac1e6f",
+      "artifactType": "plan_challenge",
+      "contentSha256": "7acc74c1c997e1984c0f009be33ce5552cf37269493b757a76f12c23b5c0c87e"
+    },
+    {
+      "artifactId": "artifact-0004-c49be61a",
+      "artifactType": "implementation_candidate",
+      "contentSha256": "289928de82ff6f2cbc0a875fcae2e4625c268ce84d32aacb35712b314fcad16c"
+    },
+    {
+      "artifactId": "artifact-0005-83bcbfe6",
+      "artifactType": "verification_report",
+      "contentSha256": "778d6f6ebacfbce3ddb11eb69806852ad8c053f2489b256dce853f21b96f091d"
+    },
+    {
+      "artifactId": "artifact-0006-305ca33b",
+      "artifactType": "technical_review",
+      "contentSha256": "1786b306f5f0a2d82be63b261eefb1c623cbd4dc88c1433153db2bc946532d29"
+    },
+    {
+      "artifactId": "artifact-0007-fe62cf58",
+      "artifactType": "documentation_bundle",
+      "contentSha256": "47933c7ae0ef6dfbdd3ddb9e828edab1c3c8c9de33b523e4b8cc64999f36c998"
+    }
+  ],
+  "approvalSubjectHashes": [
+    {
+      "purpose": "PLAN_APPROVAL",
+      "approvalSubjectHash": "dffee6eae4ea68a4f05313b47ce45aa15c25a1fa16fbad8d140333653a48f357",
+      "decision": "APPROVED"
+    },
+    {
+      "purpose": "PACKAGE_APPROVAL",
+      "approvalSubjectHash": "911a0a80330deed7fd1d7bf52b828fe064535d02397cf5ff64a6ea98517d9f67",
+      "decision": "APPROVED"
+    }
+  ],
+  "finalStage": "CLOSED",
+  "finalStateVersion": 23,
+  "eventLogHash": "3098dcc2c7038e4309f922e5eeea75acfb2efdcdd6658bf79d703f41a39901a1"
+}

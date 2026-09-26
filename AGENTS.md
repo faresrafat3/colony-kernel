@@ -46,6 +46,7 @@ A deterministic mission-control kernel for AI-agent colonies: models propose, on
 | `docs/colony-kernel-v0.1.1.md` | Normative spec | **No** (R5) |
 | `docs/*` (status, deviations, traceability, manifest, architecture) | Truth and evidence records | Yes — keep them truthful (R6) |
 | `reports/**` | Verification record + per-file SHA-256 manifest | Append/update with evidence |
+| `docs/site/` + `scripts/publish-site.sh` | Landing site source (loads the live demo.json it ships) + one-command publisher (R3-gated) | Yes |
 | `GOVERNANCE.md` | Law | Amendment commit of its own |
 | `AGENTS.md`, `README.md`, `CHANGELOG.md` | Entry surfaces | Yes |
 

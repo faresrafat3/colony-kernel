@@ -5,6 +5,7 @@
 A deterministic mission-control kernel for AI-agent colonies: models propose, only the kernel commits.
 
 **Live site:** [faresrafat3.github.io/colony-kernel](https://faresrafat3.github.io/colony-kernel/) — the proof, not the promise.
+Site source: [`docs/site/`](docs/site/) — republish anytime with `bash scripts/publish-site.sh`.
 
 **Start here if you are an agent:** [AGENTS.md](AGENTS.md) — the boot contract (one-command verify, hard rules, repo map, update-and-ship recipe).
 
