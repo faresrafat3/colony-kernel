@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colony Kernel — Models propose. Only the kernel commits.</title>
+<meta name="description" content="Deterministic mission control for AI agent colonies: 67 offline tests, zero runtime dependencies, byte-identical replay. Your agents can't lie about passing QA.">
+<style>
+  :root { --bg:#0b0f14; --panel:#121821; --ink:#e8edf2; --dim:#8b98a5; --acc:#4ade80; --acc2:#38bdf8; --warn:#f87171; }
+  * { box-sizing:border-box; margin:0; padding:0 }
+  body { background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:980px; margin:0 auto; padding:0 24px }
+  header { padding:72px 0 40px }
+  h1 { font-size:clamp(28px,5vw,44px); line-height:1.15; letter-spacing:-.02em }
+  h1 em { color:var(--acc); font-style:normal }
+  .sub { color:var(--dim); font-size:19px; margin-top:16px; max-width:46em }
+  .cta { display:inline-block; margin-top:28px; background:var(--acc); color:#052012; font-weight:700; padding:14px 26px; border-radius:10px; text-decoration:none; font-size:17px }
+  .cta.ghost { background:transparent; color:var(--acc2); border:1px solid #22475e; margin-left:12px }
+  .badges { margin-top:20px; display:flex; gap:10px; flex-wrap:wrap }
+  .badge { background:var(--panel); border:1px solid #1f2937; color:var(--dim); font-size:13px; padding:6px 12px; border-radius:999px }
+  .badge b { color:var(--ink) }
+  section { padding:36px 0; border-top:1px solid #182130 }
+  h2 { font-size:24px; margin-bottom:18px; letter-spacing:-.01em }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px }
+  .card { background:var(--panel); border:1px solid #1f2937; border-radius:12px; padding:20px }
+  .card h3 { font-size:16px; margin-bottom:8px; color:var(--acc2) }
+  .card p { color:var(--dim); font-size:14.5px }
+  pre { background:#0a0e13; border:1px solid #1f2937; border-radius:12px; padding:18px; overflow-x:auto; font:13.5px/1.55 ui-monospace,Menlo,Consolas,monospace; color:#c9d6e2 }
+  pre .k { color:var(--acc) } pre .s { color:#fbbf24 } pre .c { color:#5b6b7b } pre .n { color:var(--acc2) }
+  .verify { color:var(--acc); font-weight:600 }
+  .audit { background:linear-gradient(180deg,#121821,#0e141c); border:1px solid #22405a; border-radius:16px; padding:28px; margin:8px 0 40px }
+  .audit h2 { margin-bottom:10px }
+  .audit p { color:var(--dim); margin-bottom:14px }
+  footer { padding:32px 0 64px; color:#54626f; font-size:14px; border-top:1px solid #182130; margin-top:24px }
+  footer a { color:var(--dim) }
+  code { background:var(--panel); padding:2px 7px; border-radius:6px; font-size:.9em }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Models propose.<br><em>Only the kernel commits.</em></h1>
+  <p class="sub">Colony Kernel is deterministic mission control for AI-agent colonies. Every state change, budget, and human approval flows through an auditable, fail-closed core — so an agent saying <i>“this passed”</i> is never treated as a verification result.</p>
+  <div class="badges">
+    <span class="badge"><b>67</b> offline tests</span>
+    <span class="badge"><b>0</b> runtime dependencies</span>
+    <span class="badge">replay: <b>byte-identical</b></span>
+    <span class="badge">Node <b>≥22</b> · MIT</span>
+  </div>
+  <a class="cta" href="https://github.com/faresrafat3/colony-kernel">Get the source →</a>
+  <a class="cta ghost" href="#proof">See the proof</a>
+</header>
+
+<section id="proof">
+  <h2>The proof, not the promise</h2>
+  <p style="color:var(--dim);margin-bottom:16px">One seeded demo mission, run twice. Two runs are <b>byte-identical</b> — that's the whole point. Snippet from an actual run:</p>
+<pre>{
+  <span class="k">"missionId"</span>: <span class="s">"mission-0001-3093e5a6"</span>,
+  <span class="k">"title"</span>: <span class="s">"Fix a controlled bug in a disposable calculator fixture"</span>,
+  <span class="k">"seed"</span>: <span class="s">"colony-kernel-m1a-seed-001"</span>,
+  <span class="k">"acceptedTransitions"</span>: [  <span class="c">// 23 accepted, state machine with default-deny edges</span>
+    { <span class="k">"seq"</span>: <span class="n">1</span>, <span class="k">"event"</span>: <span class="s">"MISSION_CREATED"</span>, <span class="k">"from"</span>: <span class="s">"CREATED"</span>, <span class="k">"stateVersion"</span>: <span class="n">1</span> },
+    { <span class="k">"seq"</span>: <span class="n">2</span>, <span class="k">"event"</span>: <span class="s">"POLICY_SCREEN_STARTED"</span>, <span class="k">"to"</span>: <span class="s">"POLICY_SCREENING"</span>, <span class="k">"stateVersion"</span>: <span class="n">2</span> },
+    <span class="c">// …</span>
+  ],
+  <span class="k">"artifacts"</span>: <span class="n">7</span>,
+  <span class="k">"finalStage"</span>: <span class="s">"CLOSED"</span>,
+  <span class="k">"finalStateVersion"</span>: <span class="n">23</span>,
+  <span class="k">"eventLogHash"</span>: <span class="s">"3098dcc2c7038e4309f922e5…"</span>
+}</pre>
+  <p style="color:var(--dim);margin-top:14px">Run it yourself, offline, in seconds:</p>
+<pre><span class="k">git</span> clone https://github.com/faresrafat3/colony-kernel && <span class="k">cd</span> colony-kernel
+<span class="k">npm</span> install
+<span class="verify">npm run verify</span>   <span class="c"># typecheck + lint + 67 tests, all offline</span>
+<span class="k">npm</span> run demo <span class="k">></span> a.json; <span class="k">npm</span> run demo <span class="k">></span> b.json
+<span class="k">diff</span> a.json b.json   <span class="c"># empty — byte-identical replay</span></pre>
+</section>
+
+<section>
+  <h2>What's inside</h2>
+  <div class="grid">
+    <div class="card"><h3>22-stage state machine</h3><p>Default-deny edge table — unlisted transitions are illegal, not “unlikely”. Legality precedes storage.</p></div>
+    <div class="card"><h3>Apply-once event reducer</h3><p>Accepted events carry canonical hash + CAS version + monotonic sequence. Replay reconstructs identical state.</p></div>
+    <div class="card"><h3>Content-addressed approvals</h3><p>SHA-256 over RFC 8785 JCS bytes, bound to the exact transition, consumed ≤1, expired at commit.</p></div>
+    <div class="card"><h3>Budget ledger</h3><p>Immutable limits with CAS rows — agents can't mint resources or vote themselves a raise.</p></div>
+    <div class="card"><h3>Deny-by-default roles</h3><p>No self-mutation, no self-publication. Reserved public states are structurally unreachable.</p></div>
+    <div class="card"><h3>Durable rejections</h3><p>Refused commands leave evidence and never mutate state. Audit trails don't have gaps.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>The inversion</h2>
+  <p style="color:var(--dim)">Multi-agent frameworks let the LLM drive workflow state — so workflow is only as reliable as the model. Colony flips the trust boundary: models <i>suggest</i>, a deterministic kernel <i>decides</i>. Verification is proven by replayable evidence, not claimed by the model that wrote the code.</p>
+</section>
+
+<section class="audit">
+  <h2>Work with the author</h2>
+  <p><b style="color:var(--ink)">AI Agent Reliability Audit</b> — a fixed-scope engagement for teams shipping AI agents whose outputs they can't fully trust. I audit your agent loop with the same doctrine Colony Kernel is built on: evidence over claims, replay over narratives, fail-closed over fail-open. You get a written findings report and a re-test tier.</p>
+  <p>Colony Kernel <i>is</i> the proof of work for this offer.</p>
+  <a class="cta" href="mailto:faresrafat3@gmail.com?subject=AI%20Agent%20Reliability%20Audit">Book an audit — faresrafat3@gmail.com</a>
+</section>
+
+<footer>
+  Built by <a href="https://github.com/faresrafat3">Fares Rafat</a> · Cairo, Egypt ·
+  <a href="https://github.com/faresrafat3/colony-kernel">source</a> ·
+  <a href="https://github.com/faresrafat3/colony-kernel/releases/tag/v0.1.0">v0.1.0 release</a> ·
+  CI badge green on every push
+</footer>
+
+</div>
+</body>
+</html>
