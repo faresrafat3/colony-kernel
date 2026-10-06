@@ -12,7 +12,7 @@ LIVE_URL="https://faresrafat3.github.io/colony-kernel/"
 
 [ -z "$(git status --porcelain)" ] || { echo "refusing: working tree is dirty — commit or stash first" >&2; exit 1; }
 
-echo "== gate: verify (typecheck + lint + 67 tests + byte-identical demo) =="
+echo "== gate: verify (typecheck + lint + claims + byte-identical demo) =="
 npm run -s verify | tail -1
 
 echo "== regenerate demo.json =="

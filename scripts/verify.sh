@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # The one command. R3 of GOVERNANCE.md: all gates, on the exact tree in front
 # of you. Exits non-zero on the first failure. Determinism is asserted, not
-# assumed: the demo must run twice with byte-identical output.
+# assumed: the demo must run twice with byte-identical output. The published
+# test count is measured, not trusted: check-claims refuses a surface that
+# states a count the tree does not produce.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -10,6 +12,7 @@ echo "gate typecheck: OK"
 npm run -s lint
 echo "gate lint: OK"
 npm run -s test
+node scripts/check-claims.mjs
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 npm run -s demo > "$tmp/demo-1.json"

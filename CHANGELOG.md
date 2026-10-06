@@ -12,6 +12,13 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 - `K-01` (`tests/unit/telemetry.test.ts`): asserts the per-command telemetry
   invariant. Verified to fail with the emission reverted. The test kit gained
   `toPackageGate`, the first coverage of the publish gate.
+- `scripts/check-claims.mjs` (`npm run claims`, wired into `npm run verify` and
+  therefore into CI): measures the test count from a vitest JSON run and refuses
+  any maintained surface that states a different one — `docs/site/index.html`,
+  `README.md`, `AGENTS.md`, `GOVERNANCE.md`. It also refuses a listed surface
+  that has stopped stating a count, so coverage cannot disappear quietly, and
+  exits 2 rather than guessing when the count cannot be measured. Verified to
+  fail when a claim is drifted to 99, and when a surface drops its count.
 
 ### Changed
 
@@ -25,6 +32,13 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   (`docs/TEST_TRACEABILITY.md`, `reports/**`) stay at 66 by design — they state
   what M1A verified. `GOVERNANCE.md` is law: this number change belongs in an
   amendment commit of its own (R-series, per the `AGENTS.md` repo map).
+- Live test counts updated 67 → 117, the count the tree actually produced while
+  the public surfaces still said 67. The landing page, the monitor demo and the
+  profile site published "67 offline tests" for weeks; a verifier reading the
+  code got 117. `AGENTS.md` no longer restates the M1A tally inline and points
+  at `reports/milestone-1a-manifest.json` for it, so a record and a live claim
+  cannot be confused. `GOVERNANCE.md` moves in an amendment commit of its own,
+  as before.
 
 ### Fixed
 
@@ -34,6 +48,12 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   `docs/ARCHITECTURE.md` ("Control flow of one command" ends in "telemetry
   record"). Both now emit like every other command. Telemetry remains a derived
   view that authorizes nothing (v0.1 §15), so no gate or determinism changes.
+- The landing page carried no social metadata beyond its description and no icon:
+  a link pasted anywhere rendered as a bare URL. Added `og:*` and `twitter:*`
+  tags with an inline SVG favicon (no extra request, no binary in the repo).
+- `publish-site.sh` no longer states the test count in its own output. It used
+  to carry a sixth copy of the number; it now prints what the gates measured, so
+  the count has one home in each surface a reader actually meets.
 
 ## [0.1.0] — 2026-09-18
 

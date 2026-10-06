@@ -8,7 +8,7 @@ Opening this repo? Read this file first: what is true, what is law, what is off-
 npm run verify
 ```
 
-Typecheck → lint → 67 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` = tree healthy. CI runs same script per push — check latest run before trusting old claims.
+Typecheck → lint → 117 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` = tree healthy. CI runs same script per push — check latest run before trusting old claims.
 
 ## The boot chain
 
@@ -42,7 +42,7 @@ A deterministic mission-control kernel for AI-agent colonies: models propose, on
 | `src/ports/**` | Colony-owned interfaces (storage, runtime, clock, ids, telemetry) — extension seams | Yes |
 | `src/adapters/**` | In-memory storage, fake runtime, deterministic clock/ids | Yes |
 | `src/demo/run-demo.ts` | Seeded deterministic demo; output byte-stable | Yes |
-| `tests/**` | 67 deterministic tests (transitions/contracts/security/recovery/unit) | Yes — new behavior needs tests |
+| `tests/**` | 117 deterministic tests (transitions/contracts/security/recovery/unit) | Yes — new behavior needs tests |
 | `docs/colony-kernel-v0.1.1.md` | Normative spec | **No** (R5) |
 | `docs/*` (status, deviations, traceability, manifest, architecture) | Truth and evidence records | Yes — keep them truthful (R6) |
 | `reports/**` | Verification record + per-file SHA-256 manifest | Append/update with evidence |
@@ -73,6 +73,6 @@ Implement a port:
 
 ## Current milestone (2026-09-18)
 
-M1A shipped v0.1.0: deterministic local core, zero runtime deps, 66/66 tests, byte-identical demo, CI green.
+M1A shipped v0.1.0: deterministic local core, zero runtime deps, byte-identical demo, CI green. The tally that release verified lives in `reports/milestone-1a-manifest.json`; the live count is `tests/**` above.
 Deferred: durable storage adapter (M1B), crash matrix, migration engine, filesystem workspace isolation, DSH adapter (M2, post-review).
 **Independent review PENDING, not claimed** — don't advance label until complete.
