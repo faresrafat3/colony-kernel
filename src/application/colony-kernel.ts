@@ -368,9 +368,24 @@ export class ColonyKernel {
     if (!isHumanAuthority(input.decidedBy, AGENT_ROLE_IDS)) {
       throw new KernelError("SELF_APPROVAL_DENIED", `agent identity ${input.decidedBy} cannot approve`, { decidedBy: input.decidedBy });
     }
+    // N1 reqs 5-7 / A05: if an APPROVED record already exists, the live request
+    // must still match it. A request mutated after the record was built (artifact
+    // content changed, target transition edited) must not authorize — refuse
+    // STALE_APPROVAL before anything else, including the idempotent replay.
+    // This is checked here, before buildApprovalRecord, because the replay path
+    // below would otherwise return the stale approval as if it were valid.
+    const existing = unwrap(this.storage.getApprovalRecordByRequest(input.approvalRequestId));
+    if (existing !== undefined && existing.decision === "APPROVED" && input.decision === "APPROVED") {
+      if (approvalSubjectHash(request) !== existing.approvalSubjectHash) {
+        throw new KernelError("STALE_APPROVAL", `approval ${input.approvalRequestId} subject changed since the record was built`, {
+          approvalRequestId: input.approvalRequestId,
+          recordedHash: existing.approvalSubjectHash,
+          currentHash: approvalSubjectHash(request),
+        });
+      }
+    }
     // Idempotent replay: an identical decision already recorded returns the
     // original record without emitting a second transition event (N1).
-    const existing = unwrap(this.storage.getApprovalRecordByRequest(input.approvalRequestId));
     if (existing !== undefined && existing.decision === input.decision) {
       return existing;
     }
@@ -402,6 +417,21 @@ export class ColonyKernel {
           expiresAt: request.expiresAt,
         });
       }
+      // N1 reqs 5-7 / A05: the approval is bound to the EXACT subject it was
+      // issued for. Recompute the subject hash from the live stored request and
+      // reject if it no longer matches the record — a request mutated after the
+      // record was built (artifact content changed, target transition edited)
+      // must not authorize this commit. STALE_APPROVAL is the durable refusal.
+      if (record.decision === "APPROVED") {
+        const currentSubjectHash = approvalSubjectHash(request);
+        if (currentSubjectHash !== record.approvalSubjectHash) {
+          throw new KernelError("STALE_APPROVAL", `approval ${request.approvalRequestId} subject changed since the record was built`, {
+            approvalRequestId: request.approvalRequestId,
+            recordedHash: record.approvalSubjectHash,
+            currentHash: currentSubjectHash,
+          });
+        }
+      }
       applyEvent(state, envelope);
     } catch (e) {
       if (e instanceof KernelError) {
@@ -430,10 +460,19 @@ export class ColonyKernel {
     return record;
   }
 
-  /** Record-level decision without a transition event (test/audit seam). */
+  /** Record-level decision without a transition event (test/audit seam).
+   *
+   * This is NOT a lesser-trusted path: it records an APPROVED decision that
+   * `applyBudgetTopUp` and the guarded gate both consume. It carries the same
+   * authority guard as `recordApprovalDecision` — an agent identity can never
+   * approve, on any public path. The "test/audit seam" label describes the
+   * missing transition event, not a relaxation of who may decide. */
   recordApprovalDecisionRaw(input: { approvalRequestId: string; decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string }): ApprovalRecord {
     const request = unwrap(this.storage.getApprovalRequest(input.approvalRequestId));
     if (request === undefined) throw new KernelError("APPROVAL_NOT_FOUND", `approval ${input.approvalRequestId} not found`, {});
+    if (!isHumanAuthority(input.decidedBy, AGENT_ROLE_IDS)) {
+      throw new KernelError("SELF_APPROVAL_DENIED", `agent identity ${input.decidedBy} cannot approve`, { decidedBy: input.decidedBy });
+    }
     const record = this.buildApprovalRecord(request, input);
     const stored = this.storage.recordApprovalDecision(record);
     if (!stored.ok) throw stored.error;
@@ -567,6 +606,12 @@ export class ColonyKernel {
     if (request === undefined || request.approvalPurpose !== "BUDGET_TOPUP" || request.missionId !== input.missionId) {
       throw new KernelError("INVALID_PURPOSE", "top-up approval purpose/mission mismatch", {});
     }
+    // N4 req 3: consume the approval BEFORE any ledger mutation. The consume is
+    // the at-most-once guard; it must run before upsertLedger, or a reused
+    // record would move the limit and only then be refused — the limit would
+    // have already changed. Refusing first, mutating second, is the order that
+    // makes "consumed at most once" actually hold.
+    unwrap(this.storage.consumeApproval(record.approvalRecordId, `topup:${input.resourceClass}`, this.now()));
     const ledger = this.ledger(input.missionId, input.resourceClass);
     const next = applyTopUp(ledger, {
       topUpId: this.ids.nextId("topup"),
