@@ -20,6 +20,9 @@ npm run -s demo > docs/site/demo.json
 node -e 'JSON.parse(require("fs").readFileSync("docs/site/demo.json","utf8"))'
 echo "demo.json: valid JSON, $(wc -c < docs/site/demo.json) bytes"
 
+echo "== gate: live-checker honesty (the demo must not claim fake refusals) =="
+node docs/site/test_checker.js
+
 echo "== publish docs/site -> gh-pages =="
 WORK="$(mktemp -d)"
 cleanup() { git worktree remove --force "$WORK" 2>/dev/null || true; }
