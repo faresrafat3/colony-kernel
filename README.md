@@ -4,6 +4,8 @@
 
 A deterministic mission-control kernel for AI-agent colonies: models propose, only the kernel commits.
 
+**The problem it solves:** when you hand work to an AI agent, "I finished and it works" is a *claim* you cannot verify — and a model that is wrong about its own success is worse than no agent at all. Colony makes the agent *propose* and a deterministic core *decide*, so trust comes from replayable evidence, not from the model's word.
+
 **Live site:** [faresrafat3.github.io/colony-kernel](https://faresrafat3.github.io/colony-kernel/) — the proof, not the promise.
 Site source: [`docs/site/`](docs/site/) — republish anytime with `bash scripts/publish-site.sh`.
 
