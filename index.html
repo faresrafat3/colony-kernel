@@ -68,6 +68,33 @@
     <span class="badge">replay: <b>byte-identical</b></span>
     <span class="badge">Node <b>≥22</b> · MIT</span>
   </div>
+
+  <div class="audit" style="margin-top:32px">
+    <h2 style="margin:0 0 6px;font-size:19px">The problem is measured, not asserted</h2>
+    <p class="sub" style="margin-bottom:20px">From a 2026 study of <b>9,876</b> agent trajectories across 8 model families (arXiv <a href="https://arxiv.org/abs/2606.09863" style="color:var(--acc2)">2606.09863</a>). <i>False success</i> = an agent confidently reporting completion while the environment state shows otherwise.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+      <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
+        <div style="font-size:30px;font-weight:700;color:var(--danger)">44–52%</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">of <b>all failures</b> are false success — single-control domains</div>
+      </div>
+      <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
+        <div style="font-size:30px;font-weight:700;color:var(--acc)">3%</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">when an <b>independent verifier</b> can check state — the mechanism Colony is built on</div>
+      </div>
+      <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
+        <div style="font-size:30px;font-weight:700;color:var(--warn)">0.65</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">best LLM-judge AUROC — judges read confidence, not state</div>
+      </div>
+      <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
+        <div style="font-size:30px;font-weight:700;color:var(--acc2)">20–24%</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">of rewritten failures fool even the best detectors — prose is attackable, state is not</div>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:18px;font-size:13px">
+      The thesis is not ours alone: <b>Arbiter-K</b> (<a href="https://arxiv.org/abs/2604.18652" style="color:var(--acc2)">arXiv 2604.18652</a>, <code>cure-lab/ArbiterOS</code>) shipped a deterministic governance-first kernel first, and <b>Rel(AI)Build</b> (<a href="https://arxiv.org/abs/2606.26924" style="color:var(--acc2)">arXiv 2606.26924</a>) converges on the same mechanisms. Colony's axis is <i>mission control</i> — budgets, approvals bound to transitions, durable rejections — not security interception.
+      <a href="https://github.com/faresrafat3/colony-kernel/blob/main/docs/research-2026-10-13.md" style="color:var(--acc2)">Full write-up →</a>
+    </p>
+  </div>
   <a class="cta" href="https://github.com/faresrafat3/colony-kernel">Get the source →</a>
   <a class="cta ghost" href="#tryit">Try to break it</a>
 </header>
