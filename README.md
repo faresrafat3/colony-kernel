@@ -6,6 +6,26 @@ A deterministic mission-control kernel for AI-agent colonies: models propose, on
 
 **The problem it solves:** when you hand work to an AI agent, "I finished and it works" is a *claim* you cannot verify — and a model that is wrong about its own success is worse than no agent at all. Colony makes the agent *propose* and a deterministic core *decide*, so trust comes from replayable evidence, not from the model's word.
 
+**This is measured, not asserted.** A 2026 study of 9,876 agent trajectories
+(arXiv 2606.09863) found false success — confidently reporting completion while
+the environment state shows otherwise — accounts for **44–52% of all failures**
+in single-control domains. In a dual-control domain where an independent
+verifier can check state, it drops to **3%**. The mechanism is the whole
+argument: give the verification to something other than the model, and the
+failure nearly disappears. LLM judges do not close the gap — the best of five
+judges across five prompt strategies topped out at **AUROC 0.65**, because the
+surface signal false success exploits is the same signal judges use to infer
+completion.
+
+**Adjacent work, named.** The deterministic-kernel argument is not new:
+Arbiter-K (arXiv 2604.18652, `cure-lab/ArbiterOS`) shipped a governance-first
+architecture around the same thesis, and Rel(AI)Build (arXiv 2606.26924) built
+a control plane converging on the same mechanisms — SHA-256 content addressing,
+phase state machines, permissions enforced before LLM invocation. Colony's axis
+is *mission control* (budgets, approvals bound to transitions, durable
+rejections) rather than security interception. Full write-up:
+[`docs/research-2026-10-13.md`](docs/research-2026-10-13.md).
+
 **Live site:** [faresrafat3.github.io/colony-kernel](https://faresrafat3.github.io/colony-kernel/) — the proof, not the promise.
 Site source: [`docs/site/`](docs/site/) — republish anytime with `bash scripts/publish-site.sh`.
 
