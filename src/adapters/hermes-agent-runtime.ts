@@ -107,6 +107,8 @@ export class HermesAgentRuntime implements AgentRuntime {
   private readonly now: () => Date;
   private readonly run: NonNullable<HermesAgentRuntimeOptions["run"]>;
   private cursor = 0;
+  /** IdempotencyKey → the record already produced for it. */
+  private readonly idempotent = new Map<string, AgentInvocationRecord>();
 
   /** Invocations this adapter actually sent to the host. Inspectable, not silent. */
   readonly history: {
@@ -151,6 +153,23 @@ export class HermesAgentRuntime implements AgentRuntime {
         new KernelError("INVOCATION_LIMIT_EXCEEDED", "attempt exceeds maximumAttempts", {}),
       );
     }
+    // Idempotent replay: the same key already produced a record. Return it
+    // classified as `duplicate` without touching the host or the cursor.
+    // A retry that re-executed a mission step would break the kernel's
+    // "same inputs → same record" guarantee.
+    const seen = this.idempotent.get(request.idempotencyKey);
+    if (seen !== undefined) {
+      const record: AgentInvocationRecord = {
+        ...seen,
+        outcomeClass: "duplicate",
+      };
+      this.history.push({
+        invocation: request,
+        outcomeClass: "duplicate",
+        responseFingerprint: record.responseFingerprint,
+      });
+      return { ok: true as const, value: record };
+    }
     if (this.mode === "scripted") return this.invokeScripted(request);
     return this.invokeLive(request);
   }
@@ -170,6 +189,7 @@ export class HermesAgentRuntime implements AgentRuntime {
           detail: { artifactType: response.artifactType },
           responseFingerprint: this.fingerprint(request, response.artifact),
         };
+        this.idempotent.set(request.idempotencyKey, record);
         this.history.push({
           invocation: request,
           outcomeClass: "success",
@@ -268,6 +288,7 @@ export class HermesAgentRuntime implements AgentRuntime {
       detail: { artifactType: `${request.capabilityId}_output` },
       responseFingerprint: this.fingerprint(request, artifact),
     };
+    this.idempotent.set(request.idempotencyKey, record);
     this.history.push({
       invocation: request,
       outcomeClass: "success",
