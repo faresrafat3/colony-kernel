@@ -90,7 +90,7 @@ Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memor
 | `docs/colony-kernel-v0.1.1.md` | Normative specification (the contract) |
 | `docs/ARCHITECTURE.md` | Layering rules and control flow of one command |
 | `docs/IMPLEMENTATION_STATUS.md` | What is implemented vs deferred, with actual gate results |
-| `docs/TEST_TRACEABILITY.md` | 66 ran tests + planned-but-not-run spec tests |
+| `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 64 added since (130 total) |
 | `docs/SPEC_DEVIATIONS.md` | Scoping decisions, none normative-weakening |
 | `docs/INPUT_MANIFEST.json` | SHA-256 of the normative inputs |
 | `reports/MILESTONE_1A_VERIFICATION.md` | Verification record incl. self-hash manifest |
