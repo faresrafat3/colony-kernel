@@ -33,7 +33,7 @@ Site source: [`docs/site/`](docs/site/) — republish anytime with `bash scripts
 
 Agents (planners, craftsmen, verifiers, reviewers) can *suggest* work; every state change, permission, budget, and human approval flows through an auditable, fail-closed core. A model saying "this passed" is never treated as a verification result.
 
-**Status: Milestone 1A** — deterministic local core, fully offline: fake runtime, in-memory storage, injected clock/IDs. No live model, no network, no DSH import. Independent review is pending and is not claimed.
+**Status: Milestone 1A** — deterministic local core, fully offline: fake runtime, in-memory storage, injected clock/IDs. No live model, no network, no DSH import. Independently reviewed on 2026-10-05: Milestone 1A passed, with two low-severity findings, both since closed ([`reports/INDEPENDENT_REVIEW_1A.md`](reports/INDEPENDENT_REVIEW_1A.md)). That review clears the R8 precondition for *starting* Milestone 2 — M2 itself is unimplemented and unreviewed.
 
 ## Why
 
@@ -52,7 +52,7 @@ Multi-agent frameworks (orchestrators, graphs, crews) let the LLM drive workflow
 npm install
 npm run typecheck   # strict TypeScript, no emit
 npm run lint        # eslint (typescript-eslint flat config)
-npm run test        # vitest — 130 deterministic offline tests
+npm run test        # vitest — 135 deterministic offline tests
 npm run demo        # seeded deterministic demo mission; two runs are byte-identical
 ```
 
@@ -88,12 +88,16 @@ Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memor
 | File | Purpose |
 |---|---|
 | `docs/colony-kernel-v0.1.1.md` | Normative specification (the contract) |
+| `docs/colony-kernel-v0.1-to-v0.1.1-delta.md` | Structural delta between the two normative versions |
 | `docs/ARCHITECTURE.md` | Layering rules and control flow of one command |
 | `docs/IMPLEMENTATION_STATUS.md` | What is implemented vs deferred, with actual gate results |
-| `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 64 added since (130 total) |
+| `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 69 added since (135 total) |
 | `docs/SPEC_DEVIATIONS.md` | Scoping decisions, none normative-weakening |
+| `docs/dsh-runtime-pin-plan.md` | The DSH runtime pin: plan and decision record (the pin is not established) |
+| `docs/colony-independent-review-protocol.md` | How an independent review is run and what it unlocks |
 | `docs/INPUT_MANIFEST.json` | SHA-256 of the normative inputs |
 | `reports/MILESTONE_1A_VERIFICATION.md` | Verification record incl. self-hash manifest |
+| `reports/INDEPENDENT_REVIEW_1A.md` | The independent review of Milestone 1A (2026-10-05) |
 
 ## Governance
 

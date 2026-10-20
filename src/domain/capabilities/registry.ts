@@ -47,6 +47,13 @@ export class RoleRegistry implements RoleRegistryView {
   private readonly roles: ReadonlyMap<string, RoleManifest>;
 
   constructor(roles: readonly RoleManifest[]) {
+    if (roles.length === 0) {
+      // Fail loud, never silent. An empty registry would leave the
+      // human-authority gate with an empty agent list, and an empty list
+      // treats every identity as a human authority — the unsafe direction
+      // (finding F1, reports/INDEPENDENT_REVIEW_1A.md).
+      throw new KernelError("INTEGRITY_FAILURE", "role registry must not be empty", {});
+    }
     const map = new Map<string, RoleManifest>();
     for (const role of roles) {
       if (map.has(role.roleId)) {
@@ -89,38 +96,57 @@ export class RoleRegistry implements RoleRegistryView {
   }
 }
 
-/** M1A test roles (mission §10). No publication capability exists anywhere. */
+/**
+ * M1A test roles (mission §10). No publication capability exists anywhere.
+ *
+ * One home per fact: the agent-role ids the human-authority gate checks
+ * against are derived from these manifests, so a role added here is denied
+ * approval automatically and a role removed here cannot linger in a second,
+ * hand-maintained list.
+ */
+const TEST_ROLE_MANIFESTS: readonly RoleManifest[] = [
+  {
+    schemaVersion: 1,
+    roleId: "first-mate",
+    roleVersion: 1,
+    capabilities: ["screen_policy", "conduct_reconnaissance", "propose_plan", "challenge_plan", "produce_documentation"],
+    mayNotApproveOwnOutput: true,
+  },
+  {
+    schemaVersion: 1,
+    roleId: "craftsman",
+    roleVersion: 1,
+    capabilities: ["produce_implementation_artifact"],
+    mayNotApproveOwnOutput: true,
+  },
+  {
+    schemaVersion: 1,
+    roleId: "verifier",
+    roleVersion: 1,
+    capabilities: ["produce_verification_artifact"],
+    mayNotApproveOwnOutput: true,
+  },
+  {
+    schemaVersion: 1,
+    roleId: "reviewer",
+    roleVersion: 1,
+    capabilities: ["challenge_plan", "produce_review_artifact"],
+    mayNotApproveOwnOutput: true,
+  },
+];
+
+/**
+ * The agent role ids: identities that may never act as a human approver
+ * (N1 req 10). Derived from the registry's own manifests, so the list and
+ * the registry cannot drift apart.
+ *
+ * Never empty by construction — `RoleRegistry` refuses an empty role list,
+ * and this list is the registry's manifests.
+ */
+export const AGENT_ROLE_IDS: readonly string[] = TEST_ROLE_MANIFESTS.map((role) => role.roleId);
+
 export function testRoleRegistry(): RoleRegistry {
-  return new RoleRegistry([
-    {
-      schemaVersion: 1,
-      roleId: "first-mate",
-      roleVersion: 1,
-      capabilities: ["screen_policy", "conduct_reconnaissance", "propose_plan", "challenge_plan", "produce_documentation"],
-      mayNotApproveOwnOutput: true,
-    },
-    {
-      schemaVersion: 1,
-      roleId: "craftsman",
-      roleVersion: 1,
-      capabilities: ["produce_implementation_artifact"],
-      mayNotApproveOwnOutput: true,
-    },
-    {
-      schemaVersion: 1,
-      roleId: "verifier",
-      roleVersion: 1,
-      capabilities: ["produce_verification_artifact"],
-      mayNotApproveOwnOutput: true,
-    },
-    {
-      schemaVersion: 1,
-      roleId: "reviewer",
-      roleVersion: 1,
-      capabilities: ["challenge_plan", "produce_review_artifact"],
-      mayNotApproveOwnOutput: true,
-    },
-  ]);
+  return new RoleRegistry(TEST_ROLE_MANIFESTS);
 }
 
 export const CAPABILITY_MANIFESTS: readonly CapabilityManifest[] = [

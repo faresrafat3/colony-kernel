@@ -61,7 +61,7 @@ colony-kernel/
 
 ## Single source of truth for the state machine
 
-`domain/mission/state-machine.ts` holds one declarative `EDGES` table (with
+`src/domain/mission/state-machine.ts` holds one declarative `EDGES` table (with
 payload/state narrowing predicates) plus the stage-agnostic nonterminal and pause
 blocks. Runtime validation (`decideTransition`), the human-readable table
 (`renderTransitionTable`) and the Mermaid diagram (`renderMermaidStateDiagram`)

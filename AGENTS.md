@@ -8,7 +8,7 @@ Opening this repo? Read this file first: what is true, what is law, what is off-
 npm run verify
 ```
 
-Typecheck → lint → 130 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` = tree healthy. CI runs same script per push — check latest run before trusting old claims.
+Typecheck → lint → 135 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` = tree healthy. CI runs same script per push — check latest run before trusting old claims.
 
 ## The boot chain
 
@@ -42,7 +42,7 @@ A deterministic mission-control kernel for AI-agent colonies: models propose, on
 | `src/ports/**` | Colony-owned interfaces (storage, runtime, clock, ids, telemetry) — extension seams | Yes |
 | `src/adapters/**` | In-memory storage, fake runtime, deterministic clock/ids | Yes |
 | `src/demo/run-demo.ts` | Seeded deterministic demo; output byte-stable | Yes |
-| `tests/**` | 130 deterministic tests (transitions/contracts/security/recovery/unit) | Yes — new behavior needs tests |
+| `tests/**` | 135 deterministic tests (transitions/contracts/security/recovery/unit) | Yes — new behavior needs tests |
 | `docs/colony-kernel-v0.1.1.md` | Normative spec | **No** (R5) |
 | `docs/*` (status, deviations, traceability, manifest, architecture) | Truth and evidence records | Yes — keep them truthful (R6) |
 | `reports/**` | Verification record + per-file SHA-256 manifest | Append/update with evidence |
@@ -61,7 +61,7 @@ A deterministic mission-control kernel for AI-agent colonies: models propose, on
 Implement a port:
 
 - **Durable storage** → implement `ColonyStorage` (`src/ports/storage.ts`), pass to `ColonyKernel`; M1B slice, zero domain code (`docs/SPEC_DEVIATIONS.md` §5).
-- **Real agent runtime** → implement `AgentRuntime` (`src/ports/agent-runtime.ts`); blocked on independent review (R8).
+- **Real agent runtime** → implement `AgentRuntime` (`src/ports/agent-runtime.ts`); the M1A independent review passed, so this is unblocked for M2 — but M2 needs its own review before merge.
 
 ## The update-and-ship recipe (when your copy is old)
 
@@ -71,8 +71,8 @@ Implement a port:
 4. Ship: `npm run verify` → commit (what+why+evidence) → push → `git tag vX.Y.Z` → GitHub release from `CHANGELOG.md`.
 5. `pull` diverges → reconcile by hand, never force (R4).
 
-## Current milestone (2026-09-18)
+## Current milestone (2026-10-20)
 
 M1A shipped v0.1.0: deterministic local core, zero runtime deps, byte-identical demo, CI green. The tally that release verified lives in `reports/milestone-1a-manifest.json`; the live count is `tests/**` above.
-Deferred: durable storage adapter (M1B), crash matrix, migration engine, filesystem workspace isolation, DSH adapter (M2, post-review).
-**Independent review PENDING, not claimed** — don't advance label until complete.
+**Independent review: completed 2026-10-05** — Milestone 1A passed with two low-severity findings (`reports/INDEPENDENT_REVIEW_1A.md`). F1, the human-authority guard's empty-list precondition, is closed at the application layer; F2 was a recorded observation with no severity. R8's precondition is therefore met: M2 adapter work may **start**, but M2 itself is unimplemented and must come back for its own review before merge.
+Deferred: durable storage adapter (M1B), crash matrix, migration engine, filesystem workspace isolation, DSH adapter (M2).

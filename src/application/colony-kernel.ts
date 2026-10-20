@@ -13,7 +13,7 @@ import type { ColonyStorage } from "../ports/storage.js";
 import type { Clock, IdGenerator, TelemetrySink } from "../ports/kernel-ports.js";
 import type { AgentRuntime, AgentInvocation, AgentInvocationRecord } from "../ports/agent-runtime.js";
 import type { RoleRegistry } from "../domain/capabilities/registry.js";
-import { testRoleRegistry } from "../domain/capabilities/registry.js";
+import { testRoleRegistry, AGENT_ROLE_IDS } from "../domain/capabilities/registry.js";
 import type { CapabilityId } from "../domain/capabilities/registry.js";
 import type { ArtifactContent, ArtifactType, ArtifactManifest } from "../domain/artifacts/artifact.js";
 import { canonicalArtifactContent } from "../domain/artifacts/artifact.js";
@@ -48,7 +48,10 @@ export interface KernelServices {
   roles?: RoleRegistry;
 }
 
-const AGENT_ROLE_IDS = ["first-mate", "craftsman", "verifier", "reviewer"];
+// The agent identities that may never approve. The list lives in the domain's
+// role registry (one home per fact) and is derived from the registry's own
+// manifests, so it cannot be empty and cannot drift from the roles the kernel
+// actually knows — see finding F1 in reports/INDEPENDENT_REVIEW_1A.md.
 const HUMAN_AUTHORITY = "captain";
 
 export class ColonyKernel {

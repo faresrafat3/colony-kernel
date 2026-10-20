@@ -73,7 +73,19 @@ export function approvalSubjectHash(request: ApprovalRequest): string {
   return sha256Hex(canonicalJson(request as unknown as Record<string, unknown>));
 }
 
-/** Human-authority identity: agents are never valid approvers (N1 req 10). */
+/**
+ * Human-authority identity: agents are never valid approvers (N1 req 10).
+ *
+ * Precondition (finding F1, `reports/INDEPENDENT_REVIEW_1A.md`): the caller
+ * MUST pass the real agent-role list. An **empty** list makes this function
+ * return `true` for every identity — the unsafe direction, because an agent
+ * identity would then pass as a human authority. The function is not a
+ * defect; the contract is a sharp edge and the caller owns it.
+ *
+ * The application layer satisfies the precondition structurally: it passes
+ * `AGENT_ROLE_IDS`, which is derived from the role registry's own manifests
+ * and can never be empty (`RoleRegistry` refuses to be built without roles).
+ */
 export function isHumanAuthority(decidedBy: string, agentRoleIds: readonly string[]): boolean {
   return !agentRoleIds.includes(decidedBy);
 }

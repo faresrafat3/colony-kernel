@@ -9,6 +9,22 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 
 ### Added
 
+- `docs/dsh-runtime-pin-plan.md`: the plan and decision record the normative
+  specification points at (v0.1.1 §N9). Records the runtime observed on the
+  host on 2026-10-20 (`@deepseek-ai/dsh` **0.2.0-rc.2**, nvm-managed) against
+  the version the spec recorded (`0.1.1-rc.2`), states PATH A as the decision,
+  and says what executing it would have to produce. The pin itself is still
+  unestablished — the document does not claim one.
+- `docs/colony-independent-review-protocol.md`: the procedure GOVERNANCE R8
+  refers to, written from the M1A review that was actually executed
+  (`reports/INDEPENDENT_REVIEW_1A.md`). The pre-agreed protocol was never
+  committed, so the document says so rather than pretending to be it.
+- `docs/colony-kernel-v0.1-to-v0.1.1-delta.md`: the structural delta between
+  the two normative versions, with the measured hashes and the regeneration
+  command. It is explicitly **not** a section-by-section semantic mapping —
+  that mapping is still unwritten and is recorded as an open item.
+- `tests/security/human-authority-precondition.test.ts`: pins the
+  human-authority precondition at the application layer (review finding F1).
 - `K-01` (`tests/unit/telemetry.test.ts`): asserts the per-command telemetry
   invariant. Verified to fail with the emission reverted. The test kit gained
   `toPackageGate`, the first coverage of the publish gate.
@@ -21,6 +37,21 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   fail when a claim is drifted to 99, and when a surface drops its count.
 
 ### Changed
+
+- The human-authority guard no longer depends on a hand-maintained list. The
+  application layer's `AGENT_ROLE_IDS` literal is gone; the list is derived
+  from the role registry's own manifests (`AGENT_ROLE_IDS` in
+  `src/domain/capabilities/registry.ts`), so it cannot drift from the roles the
+  kernel knows, and it cannot be empty.
+- The status surfaces state the independent review as **completed (2026-10-05)**
+  instead of pending. It had been done for fifteen days while `README.md` and
+  `AGENTS.md` still said it was pending — a false claim on the two surfaces a
+  reader meets first.
+- Live test counts updated 130 → 135 (`README.md`, `AGENTS.md`, `GOVERNANCE.md`,
+  `docs/site/index.html`). The claim gate refuses any surface that states a
+  different count than the tree produces, so the four surfaces move together.
+- `docs/ARCHITECTURE.md` pointed at the state-machine module without the `src/`
+  prefix — a path that does not exist.
 
 - Command plumbing de-duplicated: the approval-request and approval-record
   shapes now have one home each (`openApprovalRequest`, `buildApprovalRecord`);
@@ -42,6 +73,15 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 
 ### Fixed
 
+- Review finding **F1** (`reports/INDEPENDENT_REVIEW_1A.md`) closed at the
+  application layer. `isHumanAuthority(decidedBy, [])` returns `true` for every
+  identity, so a call site passing an empty list would accept an agent as the
+  approver. The precondition is now stated in the domain function's doc
+  comment, `RoleRegistry` refuses to be constructed without roles
+  (`INTEGRITY_FAILURE`) so an empty list is unreachable by construction, and
+  the guard's list is derived from the registry's own manifests rather than a
+  second hand-maintained literal. The new test was verified to fail when the
+  call site is mutated to pass `[]`.
 - `requestPackageApproval` and `requestRevision` commit through
   `storage.atomicApply` directly and emitted no telemetry, so the publish gate
   and the revision path were unobservable — contradicting
