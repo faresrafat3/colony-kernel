@@ -1,5 +1,10 @@
 # colony-kernel — Show HN / Reddit / X post
 
+> Numbers in this post were measured on 2026-10-20: 135 deterministic tests
+> (`npm run claims`), 3669 lines of TypeScript under `src/`, demo output 5613
+> bytes byte-identical across runs. The independent review completed
+> 2026-10-05 (`reports/INDEPENDENT_REVIEW_1A.md`).
+
 ## Hacker News (Show HN)
 
 **Title:**
@@ -27,10 +32,12 @@ What that means concretely:
   resources.
 - Durable rejections — a refused command leaves evidence and never mutates
   state, so the audit trail has no gaps.
-- Zero runtime dependencies, fully offline, and the demo mission is
-  byte-identical across runs (replay is the whole point).
+- One pinned runtime dependency (`@deepseek-ai/dsh` 0.1.1-rc.2, which no
+  source file imports yet — the compatibility probe is still to be written),
+  fully offline, and the demo mission is byte-identical across runs (replay is
+  the whole point).
 
-It is ~3.5k lines of strict TypeScript with 121 deterministic tests and a
+It is ~3.7k lines of strict TypeScript with 135 deterministic tests and a
 verify gate that measures its own claims instead of trusting them.
 
 Try to break it on the live site (the kernel's real transition table,
@@ -41,8 +48,8 @@ Source (MIT): https://github.com/faresrafat3/colony-kernel
 
 Honest scope: Milestone 1A is a deterministic local core — fake runtime,
 in-memory storage, injected clocks. No live model, no network. Independent
-review is pending and not claimed. The README says exactly what is implemented
-vs deferred.
+review completed 2026-10-05 with two low-severity findings. The README says
+exactly what is implemented vs deferred.
 
 ---
 
@@ -68,10 +75,10 @@ There's a live checker on the site where you try to break the kernel: submit a
 forbidden move (skip approval, self-approve, mint budget, mutate the log) and
 watch it refuse with a reason. https://faresrafat3.github.io/colony-kernel/
 
-~3.5k lines of strict TS, zero deps, 121 deterministic tests. MIT.
+~3.7k lines of strict TS, one pinned dep, 135 deterministic tests. MIT.
 
 Honest about scope: M1A is a deterministic local core, fake runtime, in-memory
-storage, no live model. Independent review pending.
+storage, no live model. Independent review completed 2026-10-05.
 
 ---
 
@@ -99,7 +106,7 @@ What's inside:
 • Content-addressed approvals, consumed exactly once
 • Immutable budget limits (agents can't mint resources)
 • Durable rejections (audit trail has no gaps)
-• Zero runtime deps
+• 1 pinned runtime dep (not yet imported)
 
 **4/**
 The demo runs byte-identical every time. That's the whole point — replay IS
@@ -109,9 +116,9 @@ Try to break the kernel yourself (real transition table as a live checker):
 https://faresrafat3.github.io/colony-kernel/
 
 **5/**
-~3.5k lines strict TypeScript · 121 deterministic tests · MIT
+~3.7k lines strict TypeScript · 135 deterministic tests · MIT
 
 Honest scope: M1A is a deterministic local core (fake runtime, in-memory
-storage). No live model. Independent review pending.
+storage). No live model. Independent review completed 2026-10-05.
 
 https://github.com/faresrafat3/colony-kernel

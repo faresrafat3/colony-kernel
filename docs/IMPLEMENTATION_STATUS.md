@@ -1,6 +1,6 @@
 # Implementation Status — Milestone 1A
 
-Normative basis: `docs/colony-kernel-v0.1.1.md` (sha256 d3c8e715c09c446c2934d1177bb86b3f762e7cce055d28f0fa2739dc8b1af841). Toolchain: Node v26.8.2, npm 11.19.1, Linux x86_64. Lockfile sha256: f13a57fd571abb63434975ef53b9706413a4ad4f1b554822a29d3329a2013d93. Runtime dependencies: none. Dev dependencies (exact): typescript 5.9.3, vitest 5.0.1, eslint 10.10.0, @typescript-eslint/{parser,plugin} 8.70.0, prettier 3.9.7, @types/node 22.20.3.
+Normative basis: `docs/colony-kernel-v0.1.1.md` (sha256 d3c8e715c09c446c2934d1177bb86b3f762e7cce055d28f0fa2739dc8b1af841). Toolchain: Node v26.8.2, npm 11.19.1, Linux x86_64. Lockfile sha256: 5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c (the M1A release lockfile's hash is f13a57fd… in `reports/milestone-1a-manifest.json`). Runtime dependencies: 1 — `@deepseek-ai/dsh` at `0.1.1-rc.2`, pinned exact, not imported by any source file yet (no compatibility probe exists; see `docs/dsh-compatibility-evidence.md`). Dev dependencies (exact): typescript 5.9.3, vitest 5.0.1, eslint 10.10.0, @typescript-eslint/{parser,plugin} 8.70.0, prettier 3.9.7, @types/node 22.20.3.
 
 ## Implemented (with honest labels)
 

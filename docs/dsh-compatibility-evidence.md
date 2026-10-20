@@ -172,31 +172,37 @@ Listed as unresolved. None of these is closed by this file.
 2. **The compatibility probe does not exist** (§3 above). Until it exists and
    passes, the pin remains unestablished and no version is certified
    compatible. This is the blocking item for the `colony-dsh-adapter`.
-3. **The "zero runtime dependencies" claim is now false in three places.**
+3. **The "zero runtime dependencies" claim was false in four places — now
+   corrected (2026-10-20).**
    Measured after the pin: `AGENTS.md:76` ("zero runtime deps"),
    `docs/site/index.html:7` and `:9` ("zero runtime dependencies" in the meta
-   and og:description) and `docs/site/index.html:67` (the badge
+   and og:description), `docs/site/index.html:67` (the badge
    `<b>0</b> runtime dependencies`), and `docs/IMPLEMENTATION_STATUS.md:3`
-   ("Runtime dependencies: none"). The tree now has exactly one runtime
-   dependency, `@deepseek-ai/dsh` at `0.1.1-rc.2`. **Not edited here**: those
-   files are being edited by the live session that works in
-   `/home/fares/Projects/colony-kernel`, and a claim that changed is the
-   Owner's to state, not an agent's to quietly rewrite. The fix is a wording
-   change on those four lines ("1 runtime dependency, pinned"), not a gate
-   change. No gate enforces the dependency count: `scripts/check-claims.mjs`
-   measures the test count only.
+   ("Runtime dependencies: none"). The tree has exactly one runtime
+   dependency, `@deepseek-ai/dsh` at `0.1.1-rc.2`. All four surfaces now state
+   it: one pinned dependency, not imported by any source file, with no
+   compatibility probe (§3 above). `docs/distribution-post.md` carried the same
+   claim in marketing copy and was corrected with them. No gate enforces the
+   dependency count — `scripts/check-claims.mjs` measures the test count only —
+   so the wording is the entire mechanism, which is why the tree could verify
+   green while stating a false claim.
 4. **The handoff's recorded hash changed.** Adding the link to
    `docs/colony-skeleton-handoff-v0.1.1.md` changed its SHA-256 from
    `ed15ef7b5cb5e7c2b443b5f13f42f9ebe43439744efb9480e99350d80a2745c1` to
    `fffbb02085fb5adb9ba2f8d424e9721dfe0e7ce7360414109b879aef5c6165f6`
-   (5372 → 5655 bytes). That old hash is recorded in two files this task was
+   (5372 → 5655 bytes). That old hash was recorded in two files this task was
    forbidden to edit: `docs/INPUT_MANIFEST.json` (`handoff.sha256`) and
-   `reports/milestone-1a-manifest.json` (`normativeInputs`). Both now state a
-   hash that no longer matches the file. **A human must update both**, with
-   the new hash above, or re-pin the handoff. Note the pre-existing
-   inconsistency in the same manifest: `docs/INPUT_MANIFEST.json` records
-   `handoff.bytes` as `7161` while the file was `5372` bytes before this
-   change — that discrepancy predates this work and is not a result of it.
+   `reports/milestone-1a-manifest.json` (`normativeInputs`). **Resolved
+   2026-10-20 for the live manifest**: `docs/INPUT_MANIFEST.json` now carries
+   the measured handoff hash and size (`fffbb020…`, 5655 bytes) and the
+   measured spec size (36172 bytes; its recorded 43893 was already wrong, and
+   the spec's recorded hash matched all along). The milestone-1A record is
+   deliberately **left as it is** — it describes the tree that milestone
+   verified, and milestone records are superseded, never rewritten (§5 below).
+   Note the pre-existing inconsistency in the same manifest:
+   `docs/INPUT_MANIFEST.json` recorded `handoff.bytes` as `7161` while the file
+   was `5372` bytes before this change — that discrepancy predates this work
+   and is not a result of it.
    Both manifests were already stale about *themselves* at the base commit:
    `reports/milestone-1a-manifest.json` records its own size as `15800`
    bytes and its own SHA-256 as `c3419b6c…`, while the file at `main` is

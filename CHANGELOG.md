@@ -35,9 +35,29 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   that has stopped stating a count, so coverage cannot disappear quietly, and
   exits 2 rather than guessing when the count cannot be measured. Verified to
   fail when a claim is drifted to 99, and when a surface drops its count.
+- `docs/dsh-compatibility-evidence.md`: the evidence artifact for the DSH pin.
+  PATH A was executed in a worktree and merged: `package.json` now pins
+  `@deepseek-ai/dsh` at exactly `0.1.1-rc.2` (lockfile sha256
+  `5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c`),
+  `npm run verify` is green before and after the pin (135 tests, byte-identical
+  demo, 5613 bytes), and no gate was changed, weakened or skipped. The file
+  records the version drift (spec `0.1.1-rc.2` / host `0.2.0-rc.2` / npm
+  latest `0.2.1-rc.2`), states that **no compatibility probe exists**, and
+  lists the items it does not close. It certifies nothing.
 
 ### Changed
 
+- The runtime-dependency claim is one fact in one place. `package.json` pins
+  `@deepseek-ai/dsh` at exactly `0.1.1-rc.2`, so "zero runtime dependencies"
+  became false on five surfaces (`AGENTS.md`, `docs/IMPLEMENTATION_STATUS.md`,
+  `docs/site/index.html`, `docs/distribution-post.md`); each now states one
+  pinned dependency that no source file imports yet, and
+  `docs/INPUT_MANIFEST.json` carries the handoff's measured hash and size
+  (both of its byte counts were stale from creation). The M1A records
+  (`reports/**`) still say "none" by design — they state what M1A verified.
+- `docs/distribution-post.md` said 121 tests and "independent review pending";
+  both were stale (the gate measures 135, and the review completed
+  2026-10-05). The post now states the measured numbers and the review's date.
 - The human-authority guard no longer depends on a hand-maintained list. The
   application layer's `AGENT_ROLE_IDS` literal is gone; the list is derived
   from the role registry's own manifests (`AGENT_ROLE_IDS` in
