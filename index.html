@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Colony Kernel — Models propose. Only the kernel commits.</title>
-<meta name="description" content="Deterministic mission control for AI agent colonies: 121 offline tests, zero runtime dependencies, byte-identical replay. Your agents can't lie about passing QA.">
+<meta name="description" content="Deterministic mission control for AI agent colonies: 135 offline tests, zero runtime dependencies, byte-identical replay. Your agents can't lie about passing QA.">
 <meta property="og:title" content="Colony Kernel — Models propose. Only the kernel commits.">
-<meta property="og:description" content="Deterministic mission control for AI agent colonies: 121 offline tests, zero runtime dependencies, byte-identical replay.">
+<meta property="og:description" content="Deterministic mission control for AI agent colonies: 135 offline tests, zero runtime dependencies, byte-identical replay.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://faresrafat3.github.io/colony-kernel/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0f14'/%3E%3Crect x='7' y='7' width='18' height='18' rx='3' fill='none' stroke='%234ade80' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%234ade80'/%3E%3C/svg%3E">
 <style>
-  :root { --bg:#0b0f14; --panel:#121821; --ink:#e8edf2; --dim:#8b98a5; --acc:#4ade80; --acc2:#38bdf8; --danger:#f87171; --warn:#fbbf24; }
+  :root { --bg:#0b0f14; --panel:#130821; --ink:#e8edf2; --dim:#8b98a5; --acc:#4ade80; --acc2:#38bdf8; --danger:#f87171; --warn:#fbbf24; }
   * { box-sizing:border-box; margin:0; padding:0 }
   body { background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system,"Segoe UI",Roboto,sans-serif; }
   .wrap { max-width:980px; margin:0 auto; padding:0 24px }
@@ -32,7 +32,7 @@
   .card p { color:var(--dim); font-size:14.5px }
   pre { background:#0a0e13; border:1px solid #1f2937; border-radius:12px; padding:18px; overflow-x:auto; font:13px/1.5 ui-monospace,Menlo,Consolas,monospace; color:#c9d6e2; white-space:pre }
   .verify { color:var(--acc); font-weight:600 }
-  .audit { background:linear-gradient(180deg,#121821,#0e141c); border:1px solid #22405a; border-radius:16px; padding:28px; margin:8px 0 40px }
+  .audit { background:linear-gradient(180deg,#130821,#0e141c); border:1px solid #22405a; border-radius:16px; padding:28px; margin:8px 0 40px }
   .audit h2 { margin-bottom:10px }
   .audit p { color:var(--dim); margin-bottom:14px }
   footer { padding:32px 0 64px; color:#54626f; font-size:14px; border-top:1px solid #182130; margin-top:24px }
@@ -40,7 +40,7 @@
   code { background:var(--panel); padding:2px 7px; border-radius:6px; font-size:.9em }
 
   /* Try-it playground */
-  .play { background:linear-gradient(180deg,#121821,#0e141c); border:1px solid #22405a; border-radius:16px; padding:28px; margin:8px 0 40px }
+  .play { background:linear-gradient(180deg,#130821,#0e141c); border:1px solid #22405a; border-radius:16px; padding:28px; margin:8px 0 40px }
   .play h2 { margin-bottom:10px }
   .play p.intro { color:var(--dim); margin-bottom:18px }
   .attacks { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px }
@@ -63,7 +63,7 @@
   <p class="sub">Colony Kernel is deterministic mission control for AI-agent colonies. Every state change, budget, and human approval flows through an auditable, fail-closed core — so an agent saying <i>"this passed"</i> is never treated as a verification result.</p>
   <p class="sub" style="margin-top:14px"><b style="color:var(--acc)">The problem it solves:</b> when you hand work to an AI agent, "I finished and it works" is a <i>claim</i> you cannot verify — and a model that is wrong about its own success is worse than no agent at all. Colony makes the agent <i>propose</i> and a deterministic core <i>decide</i>, so trust comes from replayable evidence, not from the model's word.</p>
   <div class="badges">
-    <span class="badge"><b>121</b> offline tests</span>
+    <span class="badge"><b>135</b> offline tests</span>
     <span class="badge"><b>0</b> runtime dependencies</span>
     <span class="badge">replay: <b>byte-identical</b></span>
     <span class="badge">Node <b>≥22</b> · MIT</span>
@@ -121,7 +121,7 @@
   <p style="color:var(--dim);margin-top:14px">Reproduce it yourself, offline, in seconds:</p>
 <pre>git clone https://github.com/faresrafat3/colony-kernel &amp;&amp; cd colony-kernel
 npm install
-<span class="verify">npm run verify</span>   # typecheck + lint + 121 tests + claims + demo twice, byte-identical
+<span class="verify">npm run verify</span>   # typecheck + lint + 135 tests + claims + demo twice, byte-identical
 npm run demo &gt; a.json; npm run demo &gt; b.json
 diff a.json b.json   # empty — byte-identical replay</pre>
 </section>
