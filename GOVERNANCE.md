@@ -27,7 +27,7 @@ No push without, on the exact tree being pushed:
 ```
 npm run typecheck   # strict, zero diagnostics
 npm run lint        # zero errors, zero warnings
-npm run test        # 135 deterministic tests
+npm run test        # 147 deterministic tests
 npm run demo twice  # byte-identical reruns
 ```
 

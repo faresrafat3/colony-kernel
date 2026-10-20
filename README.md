@@ -37,7 +37,7 @@ Multi-agent frameworks (orchestrators, graphs, crews) let the LLM drive workflow
 npm install
 npm run typecheck   # strict TypeScript, no emit
 npm run lint        # eslint (typescript-eslint flat config)
-npm run test        # vitest — 135 deterministic offline tests
+npm run test        # vitest — 147 deterministic offline tests
 npm run demo        # seeded deterministic demo mission; two runs are byte-identical
 ```
 
@@ -76,9 +76,9 @@ Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memor
 | `docs/colony-kernel-v0.1-to-v0.1.1-delta.md` | Structural delta between the two normative versions |
 | `docs/ARCHITECTURE.md` | Layering rules and control flow of one command |
 | `docs/IMPLEMENTATION_STATUS.md` | What is implemented vs deferred, with actual gate results |
-| `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 69 added since (135 total) |
+| `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 81 added since (147 total) |
 | `docs/SPEC_DEVIATIONS.md` | Scoping decisions, none normative-weakening |
-| `docs/dsh-runtime-pin-plan.md` | The DSH runtime pin: plan and decision record (the pin is not established) |
+| `docs/dsh-runtime-pin-plan.md` | The DSH runtime pin: plan and decision record |
 | `docs/colony-independent-review-protocol.md` | How an independent review is run and what it unlocks |
 | `docs/INPUT_MANIFEST.json` | SHA-256 of the normative inputs |
 | `reports/MILESTONE_1A_VERIFICATION.md` | Verification record incl. self-hash manifest |

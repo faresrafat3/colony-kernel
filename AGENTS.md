@@ -8,7 +8,7 @@ Opening this repo? Read this file first: what is true, what is law, what is off-
 npm run verify
 ```
 
-Typecheck → lint → 135 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` means the tree is healthy. CI runs the same script on every push, so check the latest run before you trust an old claim.
+Typecheck → lint → 147 deterministic tests → demo twice (byte-identical). `verify: ALL GATES GREEN` means the tree is healthy. CI runs the same script on every push, so check the latest run before you trust an old claim.
 
 ## The boot chain
 
@@ -42,7 +42,7 @@ A deterministic mission-control kernel for AI-agent colonies. Models propose; on
 | `src/ports/**` | Colony-owned interfaces (storage, runtime, clock, ids, telemetry), the extension seams | Yes |
 | `src/adapters/**` | In-memory storage, fake runtime, deterministic clock/ids | Yes |
 | `src/demo/run-demo.ts` | Seeded deterministic demo; output byte-stable | Yes |
-| `tests/**` | 135 deterministic tests (transitions/contracts/security/recovery/unit) | Yes, with tests for new behavior |
+| `tests/**` | 147 deterministic tests (transitions/contracts/security/recovery/unit) | Yes, with tests for new behavior |
 | `docs/colony-kernel-v0.1.1.md` | Normative spec | **No** (R5) |
 | `docs/*` (status, deviations, traceability, manifest, architecture) | Truth and evidence records | Yes, keep them truthful (R6) |
 | `reports/**` | Verification record + per-file SHA-256 manifest | Append/update with evidence |
@@ -73,7 +73,7 @@ You extend this by implementing a port:
 
 ## Current milestone (2026-10-20)
 
-M1A shipped v0.1.0: deterministic local core, zero runtime deps, byte-identical demo, CI green. The tally that release verified lives in `reports/milestone-1a-manifest.json`; the live count is `tests/**` above. HEAD now pins **one** runtime dependency (`@deepseek-ai/dsh` 0.1.1-rc.2, not yet imported by any source file, no compatibility probe; see `docs/dsh-compatibility-evidence.md`).
+M1A shipped v0.1.0: deterministic local core, zero runtime deps, byte-identical demo, CI green. The tally that release verified lives in `reports/milestone-1a-manifest.json`; the live count is `tests/**` above. HEAD now pins **one** runtime dependency (`@deepseek-ai/dsh` 0.1.1-rc.2, not yet imported by any source file; the §N9 compatibility probe now exists and has run, and its output decides the pinned version — see `docs/dsh-compatibility-evidence.md`).
 
 Independent review completed 2026-10-05. Milestone 1A passed with two low-severity findings (`reports/INDEPENDENT_REVIEW_1A.md`). F1, the human-authority guard's empty-list precondition, is closed at the application layer. F2 was a recorded observation with no severity. R8's precondition is therefore met: M2 adapter work may start, but M2 itself is unimplemented and must come back for its own review before merge.
 Deferred: durable storage adapter (M1B), crash matrix, migration engine, filesystem workspace isolation, DSH adapter (M2).

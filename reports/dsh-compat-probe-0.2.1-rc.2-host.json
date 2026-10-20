@@ -1,0 +1,634 @@
+{
+  "receiptVersion": 1,
+  "kind": "dsh-compat-probe-receipt",
+  "generatedAt": "2026-10-20T17:21:53.092Z",
+  "probe": {
+    "path": "scripts/dsh-compat-probe.mjs",
+    "sha256": "b553cb9e5a3674c93ab9269ed78111d344d7500f82656c5e56a07a6c4db03656"
+  },
+  "spec": {
+    "document": "docs/colony-kernel-v0.1.1.md",
+    "section": "N9",
+    "requirements": [
+      "N9.1",
+      "N9.2",
+      "N9.3",
+      "N9.4"
+    ]
+  },
+  "command": "node scripts/dsh-compat-probe.mjs --require --json reports/dsh-compat-probe-0.2.1-rc.2-host.json --project-root /home/fares/.nvm/versions/node/v26.12.0/lib --expect-version 0.2.1-rc.2 --lockfile /home/fares/.dsh/worktrees/colony-kernel-probe/package-lock.json --expected-integrity sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw== --integrity-source manual-npm-view",
+  "projectRoot": "/home/fares/.nvm/versions/node/v26.12.0/lib",
+  "resolution": {
+    "packageName": "@deepseek-ai/dsh",
+    "candidatePath": "/home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh",
+    "resolvedPath": "/home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh",
+    "resolvedWithinProjectRoot": true,
+    "globalFallbackUsed": false,
+    "globalFallbackPolicy": "The DSH package is resolved only from the project's own node_modules. A global install is never used as a fallback.",
+    "status": "pass"
+  },
+  "package": {
+    "name": "@deepseek-ai/dsh",
+    "declaredVersion": "0.2.1-rc.2",
+    "installedVersion": "0.2.1-rc.2",
+    "versionIdentity": {
+      "status": "pass",
+      "detail": "the installed package version 0.2.1-rc.2 equals the declared version 0.2.1-rc.2"
+    },
+    "executable": {
+      "path": "lib/bin.js",
+      "sha256": "80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f",
+      "bytes": 11772
+    },
+    "packageSha256": "b8e758ede6cc27146be841a2ec4def1b7999990324f34c8be38eaa260e10bb7e",
+    "packageSha256Definition": "sha256 over the manifest lines \"<sha256 of file>  <relative path>\\n\" for every file of the package except nested node_modules, in sorted relative-path order",
+    "dependencySetPackages": [
+      "@deepseek-ai/cordis",
+      "@deepseek-ai/dsh-agent",
+      "@deepseek-ai/dsh-agent-loop",
+      "@deepseek-ai/dsh-app-boot",
+      "@deepseek-ai/dsh-session",
+      "@deepseek-ai/dsh-session-telemetry",
+      "@deepseek-ai/dsh-subagent",
+      "@deepseek-ai/dsh-system-prompt",
+      "@deepseek-ai/dsh-token-meter",
+      "@deepseek-ai/dsh-tools",
+      "@deepseek-ai/dsh-user-approval"
+    ],
+    "dependencySetSha256": "517277f296337aff4ac0606303ba6ddcf59b349909e93eafb0db87434ba772a3",
+    "lockfile": {
+      "path": "/home/fares/.dsh/worktrees/colony-kernel-probe/package-lock.json",
+      "sha256": "5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c",
+      "bytes": 401752,
+      "entry": {
+        "version": "0.1.1-rc.2",
+        "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-0.1.1-rc.2.tgz",
+        "integrity": "sha512-UP1UIh6q3Gme/yXRn/QL2P8IsVlv8Shpg22TRJIZPsCRWLm4CBiA1MUvXmJAfsOEETBMLAl+xWPtFw6ICsN3wg=="
+      }
+    },
+    "integrity": {
+      "source": "manual-npm-view",
+      "status": "pass",
+      "expected": "sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw==",
+      "tarballFound": true,
+      "recomputed": "sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw==",
+      "tarballPath": "/home/fares/.npm/_cacache/content-v2/sha512/b6/f6/3eca17ca4627ed85ba8f7bf38ad00631339664bea7d8abf8cc62025c114c624512f5570adadd38b94c1e805e049641d88f1d887f569e9225af721f030dbb",
+      "detail": "the cached tarball re-hashes to the recorded integrity"
+    },
+    "subPackageVersions": {
+      "@deepseek-ai/cordis": "4.0.5",
+      "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-app-boot": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-session-telemetry": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-subagent": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-token-meter": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+      "@deepseek-ai/dsh-user-approval": "0.2.1-rc.2"
+    }
+  },
+  "requirements": [
+    {
+      "id": "agent-runtime.export.AgentRegistry",
+      "interface": "AgentRuntime",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-agent",
+      "symbol": "AgentRegistry",
+      "surface": "exported symbol AgentRegistry",
+      "status": "pass",
+      "detail": "the export AgentRegistry is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-agent/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-agent/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "agent-runtime.service.agents",
+      "interface": "AgentRuntime",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-agent",
+      "symbol": "agents",
+      "surface": "Cordis service name agents",
+      "status": "pass",
+      "detail": "the Cordis service \"agents\" is registered in node_modules/@deepseek-ai/dsh-agent/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-agent/lib/index.js",
+        "line": 332,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "agent-runtime.event.agent-status",
+      "interface": "AgentRuntime",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-agent-loop",
+      "symbol": "agent/status",
+      "surface": "event name agent/status",
+      "status": "pass",
+      "detail": "the event \"agent/status\" is declared in node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+        "line": 798,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "agent-runtime.export.AgentLoop",
+      "interface": "AgentRuntime",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-agent-loop",
+      "symbol": "AgentLoop",
+      "surface": "exported symbol AgentLoop",
+      "status": "pass",
+      "detail": "the export AgentLoop is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "agent-runtime.service.agentLoop",
+      "interface": "AgentRuntime",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-agent-loop",
+      "symbol": "agentLoop",
+      "surface": "Cordis service name agentLoop",
+      "status": "pass",
+      "detail": "the Cordis service \"agentLoop\" is registered in node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+        "line": 1572,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "prompt-assembler.export.SystemPrompt",
+      "interface": "PromptAssembler",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-system-prompt",
+      "symbol": "SystemPrompt",
+      "surface": "exported symbol SystemPrompt",
+      "status": "pass",
+      "detail": "the export SystemPrompt is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "prompt-assembler.service.systemPrompt",
+      "interface": "PromptAssembler",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-system-prompt",
+      "symbol": "systemPrompt",
+      "surface": "Cordis service name systemPrompt",
+      "status": "pass",
+      "detail": "the Cordis service \"systemPrompt\" is registered in node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+        "line": 226,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "prompt-assembler.event.system-prompt-assemble",
+      "interface": "PromptAssembler",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-system-prompt",
+      "symbol": "system-prompt/assemble",
+      "surface": "event name system-prompt/assemble",
+      "status": "pass",
+      "detail": "the event \"system-prompt/assemble\" is declared in node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+        "line": 398,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "tool-dispatcher.export.ToolRuntime",
+      "interface": "ToolDispatcher",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-tools",
+      "symbol": "ToolRuntime",
+      "surface": "exported symbol ToolRuntime",
+      "status": "pass",
+      "detail": "the export ToolRuntime is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "tool-dispatcher.service.tools",
+      "interface": "ToolDispatcher",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-tools",
+      "symbol": "tools",
+      "surface": "Cordis service name tools",
+      "status": "pass",
+      "detail": "the Cordis service \"tools\" is registered in node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+        "line": 2798,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "tool-dispatcher.event.tools-change",
+      "interface": "ToolDispatcher",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-tools",
+      "symbol": "tools/change",
+      "surface": "event name tools/change",
+      "status": "pass",
+      "detail": "the event \"tools/change\" is declared in node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+        "line": 2784,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "tool-dispatcher.export.defineTool",
+      "interface": "ToolDispatcher",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-tools",
+      "symbol": "defineTool",
+      "surface": "exported symbol defineTool",
+      "status": "pass",
+      "detail": "the export defineTool is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-tools/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "session-recorder.export.SessionStore",
+      "interface": "SessionRecorder",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-session",
+      "symbol": "SessionStore",
+      "surface": "exported symbol SessionStore",
+      "status": "pass",
+      "detail": "the export SessionStore is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "session-recorder.service.sessions",
+      "interface": "SessionRecorder",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-session",
+      "symbol": "sessions",
+      "surface": "Cordis service name sessions",
+      "status": "pass",
+      "detail": "the Cordis service \"sessions\" is registered in node_modules/@deepseek-ai/dsh-session/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session/lib/index.js",
+        "line": 1739,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "session-recorder.event.session-event",
+      "interface": "SessionRecorder",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-session",
+      "symbol": "session/event",
+      "surface": "event name session/event",
+      "status": "pass",
+      "detail": "the event \"session/event\" is declared in node_modules/@deepseek-ai/dsh-session/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session/lib/index.js",
+        "line": 1587,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "session-recorder.event.session-created",
+      "interface": "SessionRecorder",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-session",
+      "symbol": "session/created",
+      "surface": "event name session/created",
+      "status": "pass",
+      "detail": "the event \"session/created\" is declared in node_modules/@deepseek-ai/dsh-session/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session/lib/index.js",
+        "line": 1910,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "session-recorder.export.KNOWN_SESSION_EVENT_TYPES",
+      "interface": "SessionRecorder",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-session",
+      "symbol": "KNOWN_SESSION_EVENT_TYPES",
+      "surface": "exported symbol KNOWN_SESSION_EVENT_TYPES",
+      "status": "pass",
+      "detail": "the export KNOWN_SESSION_EVENT_TYPES is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "subagent-spawner.export.SubagentRuntime",
+      "interface": "SubagentSpawner",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-subagent",
+      "symbol": "SubagentRuntime",
+      "surface": "exported symbol SubagentRuntime",
+      "status": "pass",
+      "detail": "the export SubagentRuntime is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "subagent-spawner.service.subagents",
+      "interface": "SubagentSpawner",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-subagent",
+      "symbol": "subagents",
+      "surface": "Cordis service name subagents",
+      "status": "pass",
+      "detail": "the Cordis service \"subagents\" is registered in node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+        "line": 2992,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "subagent-spawner.event.subagent-start",
+      "interface": "SubagentSpawner",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-subagent",
+      "symbol": "subagent/start",
+      "surface": "event name subagent/start",
+      "status": "pass",
+      "detail": "the event \"subagent/start\" is declared in node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+        "line": 197,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "subagent-spawner.export.SubagentRunId",
+      "interface": "SubagentSpawner",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-subagent",
+      "symbol": "SubagentRunId",
+      "surface": "exported symbol SubagentRunId",
+      "status": "pass",
+      "detail": "the export SubagentRunId is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-subagent/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "human-approval.export.ApprovalService",
+      "interface": "HumanApprovalTransport",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-user-approval",
+      "symbol": "ApprovalService",
+      "surface": "exported symbol ApprovalService",
+      "status": "pass",
+      "detail": "the export ApprovalService is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "human-approval.service.approval",
+      "interface": "HumanApprovalTransport",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-user-approval",
+      "symbol": "approval",
+      "surface": "Cordis service name approval",
+      "status": "pass",
+      "detail": "the Cordis service \"approval\" is registered in node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+        "line": 76,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "human-approval.export.APPROVAL_POLICIES",
+      "interface": "HumanApprovalTransport",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-user-approval",
+      "symbol": "APPROVAL_POLICIES",
+      "surface": "exported symbol APPROVAL_POLICIES",
+      "status": "pass",
+      "detail": "the export APPROVAL_POLICIES is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "human-approval.event.approval-request",
+      "interface": "HumanApprovalTransport",
+      "spec": "N9.3",
+      "kind": "event",
+      "package": "@deepseek-ai/dsh-user-approval",
+      "symbol": "approval/request",
+      "surface": "event name approval/request",
+      "status": "pass",
+      "detail": "the event \"approval/request\" is declared in node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-user-approval/lib/index.js",
+        "line": 176,
+        "kind": "event-declaration"
+      }
+    },
+    {
+      "id": "lifecycle.export.boot",
+      "interface": "LifecycleController",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-app-boot",
+      "symbol": "boot",
+      "surface": "exported symbol boot",
+      "status": "pass",
+      "detail": "the export boot is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-app-boot/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "lifecycle.export.installFailLoud",
+      "interface": "LifecycleController",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-app-boot",
+      "symbol": "installFailLoud",
+      "surface": "exported symbol installFailLoud",
+      "status": "pass",
+      "detail": "the export installFailLoud is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-app-boot/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "lifecycle.export.initProfile",
+      "interface": "LifecycleController",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-app-boot",
+      "symbol": "initProfile",
+      "surface": "exported symbol initProfile",
+      "status": "pass",
+      "detail": "the export initProfile is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-app-boot/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "lifecycle.export.Service",
+      "interface": "LifecycleController",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/cordis",
+      "symbol": "Service",
+      "surface": "exported symbol Service (the disposer-owning service base every DSH service extends)",
+      "status": "pass",
+      "detail": "the export Service is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/cordis/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/cordis/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "telemetry.export.SessionTelemetryCoordinator",
+      "interface": "TelemetrySink",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-session-telemetry",
+      "symbol": "SessionTelemetryCoordinator",
+      "surface": "exported symbol SessionTelemetryCoordinator",
+      "status": "pass",
+      "detail": "the export SessionTelemetryCoordinator is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session-telemetry/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session-telemetry/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "telemetry.service.sessionTelemetry",
+      "interface": "TelemetrySink",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-session-telemetry",
+      "symbol": "sessionTelemetry",
+      "surface": "Cordis service name sessionTelemetry",
+      "status": "pass",
+      "detail": "the Cordis service \"sessionTelemetry\" is registered in node_modules/@deepseek-ai/dsh-session-telemetry/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-session-telemetry/lib/index.js",
+        "line": 275,
+        "kind": "service-declaration"
+      }
+    },
+    {
+      "id": "telemetry.export.TokenMeter",
+      "interface": "TelemetrySink",
+      "spec": "N9.3",
+      "kind": "export",
+      "package": "@deepseek-ai/dsh-token-meter",
+      "symbol": "TokenMeter",
+      "surface": "exported symbol TokenMeter",
+      "status": "pass",
+      "detail": "the export TokenMeter is present on the module namespace of /home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-token-meter/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-token-meter/lib/index.js",
+        "kind": "runtime-import"
+      }
+    },
+    {
+      "id": "telemetry.service.tokenMeter",
+      "interface": "TelemetrySink",
+      "spec": "N9.3",
+      "kind": "service",
+      "package": "@deepseek-ai/dsh-token-meter",
+      "symbol": "tokenMeter",
+      "surface": "Cordis service name tokenMeter",
+      "status": "pass",
+      "detail": "the Cordis service \"tokenMeter\" is registered in node_modules/@deepseek-ai/dsh-token-meter/lib/index.js",
+      "evidence": {
+        "file": "node_modules/@deepseek-ai/dsh-token-meter/lib/index.js",
+        "line": 692,
+        "kind": "service-declaration"
+      }
+    }
+  ],
+  "missing": [],
+  "capabilityVerdict": "pass",
+  "identityVerdict": "pass",
+  "verdict": "pass",
+  "errors": [],
+  "identityChecks": [
+    {
+      "status": "pass",
+      "detail": "the installed package version 0.2.1-rc.2 equals the declared version 0.2.1-rc.2"
+    },
+    {
+      "status": "pass",
+      "detail": "the executable hash was recorded"
+    },
+    {
+      "status": "pass",
+      "detail": "the package hash was recorded"
+    },
+    {
+      "source": "manual-npm-view",
+      "status": "pass",
+      "expected": "sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw==",
+      "tarballFound": true,
+      "recomputed": "sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw==",
+      "tarballPath": "/home/fares/.npm/_cacache/content-v2/sha512/b6/f6/3eca17ca4627ed85ba8f7bf38ad00631339664bea7d8abf8cc62025c114c624512f5570adadd38b94c1e805e049641d88f1d887f569e9225af721f030dbb",
+      "detail": "the cached tarball re-hashes to the recorded integrity"
+    }
+  ],
+  "exitStatus": 0
+}

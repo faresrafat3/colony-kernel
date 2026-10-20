@@ -42,11 +42,53 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   `npm run verify` is green before and after the pin (135 tests, byte-identical
   demo, 5613 bytes), and no gate was changed, weakened or skipped. The file
   records the version drift (spec `0.1.1-rc.2` / host `0.2.0-rc.2` / npm
-  latest `0.2.1-rc.2`), states that **no compatibility probe exists**, and
-  lists the items it does not close. It certifies nothing.
+  latest `0.2.1-rc.2`), and lists the items it does not close. It certifies
+  nothing.
+- `scripts/dsh-compat-probe.mjs`: the §N9 **startup compatibility probe**, which
+  did not exist before this change. It checks 33 required DSH surfaces — the
+  exported symbol, the Cordis service name and the wire event name behind each
+  of §N9's eight Colony-owned interfaces — and it checks them the way the
+  specification's requirement 4 needs: `--require` exits non-zero with a loud
+  failure that **names the missing item**, and `--json` writes a receipt
+  carrying the version, the hashes, every requirement with its status, the
+  verdict and the timestamp. It resolves the DSH package only from the
+  project's own `node_modules`: a root with no local install, or a symlink
+  that escapes the project root, is a loud failure — a global install is never
+  used as a fallback. The tarball integrity is re-verified from the local npm
+  cache against the lockfile's recorded value; the live `npm view` comparison
+  is a separate, manually run step whose output goes in the receipt, never in
+  the gate.
+- `tests/unit/dsh-compat-probe.test.ts`: 12 tests for that probe. Trip cases
+  for a missing symbol, a missing service and a missing event — each must fail
+  **and name** the missing item; an allow case; three no-global-fallback
+  cases; and a source assertion that the gate path imports no http/net/dns
+  module and calls no `fetch`, `Date.now` or `Math.random`. No network, no
+  wall clock: the receipt's timestamp is injected.
+- `reports/dsh-compat-probe-0.1.1-rc.2-pinned.json` and
+  `reports/dsh-compat-probe-0.2.1-rc.2-host.json`: the probe's receipts, one
+  per version, each recording the command that produced it and its exit
+  status. Both exit `0` with 33/33 surfaces passing. **No required capability
+  is missing in either version.**
 
 ### Changed
 
+- The DSH **runtime table** in `docs/dsh-runtime-pin-plan.md` was stale, and
+  the correction is a measurement, not an opinion. The host was restarted at
+  17:29 on 2026-10-20 and now runs `@deepseek-ai/dsh` **0.2.1-rc.2** on Node
+  v26.12.0; the table said `0.2.0-rc.2` on Node v26.8.2, measured at 05:50
+  the same morning. The old install is still on disk — it is simply not the
+  one running. The table now carries the re-measured values, the running
+  process (pid 19488), and the entry-point hash.
+- The pin's **version is decided by the probe's output**: it moves forward
+  from `0.1.1-rc.2` to `0.2.1-rc.2`, the version the host runs, by the rule
+  this repository had already written down (probe the host's version; if the
+  probe passes, the pin moves forward explicitly, with the probe output as
+  the evidence). Both versions pass 33/33, so there is no missing capability
+  to record; the change is in its own commit, with the reason.
+- Live test counts updated 135 → 147 (`README.md`, `AGENTS.md`, `GOVERNANCE.md`,
+  `docs/site/index.html`, `docs/IMPLEMENTATION_STATUS.md`). The claim gate
+  refuses any surface that states a different count than the tree produces,
+  so the four surfaces move together.
 - The runtime-dependency claim is one fact in one place. `package.json` pins
   `@deepseek-ai/dsh` at exactly `0.1.1-rc.2`, so "zero runtime dependencies"
   became false on five surfaces (`AGENTS.md`, `docs/IMPLEMENTATION_STATUS.md`,
