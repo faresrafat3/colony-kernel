@@ -1,9 +1,9 @@
-# v0.1 → v0.1.1 — structural delta
+# v0.1 → v0.1.1: structural delta
 
 **Scope: this is a structural delta, not a section-by-section semantic
 mapping.** It states what changed in the *shape* of the normative document,
 with measured facts, and it says plainly what is still missing. A semantic
-mapping — which v0.1 paragraph became which v0.1.1 clause — is **not written**;
+mapping (which v0.1 paragraph became which v0.1.1 clause) is **not written**;
 it is recorded as an open item in `docs/IMPLEMENTATION_STATUS.md` because the
 two documents are organised differently enough that producing it is a mapping
 exercise, not a diff.
@@ -14,7 +14,7 @@ exercise, not a diff.
 |---|---|---|
 | Path | `docs/colony-kernel-v0.1.md` | `docs/colony-kernel-v0.1.1.md` |
 | SHA-256 | `ff2356e82d693229aa4509c0d1b8021d3453d0b3b3c806b78897c1d502d208a5` | `d3c8e715c09c446c2934d1177bb86b3f762e7cce055d28f0fa2739dc8b1af841` |
-| Bytes | — | 43893 |
+| Bytes | not recorded | 43893 |
 | Lines | 406 | 377 |
 | Role | historical baseline | normative for new work |
 
@@ -68,14 +68,14 @@ applied: a diff of them is noise, and the v0.1.1 contracts are the contract.
 Read off the two documents' own text, not inferred:
 
 - **The 40-type closed event vocabulary** and apply-once semantics as a
-  contract (N2) — v0.1 described the data contract in prose.
+  contract (N2); v0.1 described the data contract in prose.
 - **A repaired acceptance set, A01–A35** (N12). v0.1's completion definition
   was prose; v0.1.1 enumerates criteria that can be individually traced. The
   review packet's `TEST_PLAN_AUDIT.md` recorded a count mismatch between the
-  planned-test enumeration (65 distinct IDs) and the verdict's cited 66 —
+  planned-test enumeration (65 distinct IDs) and the verdict's cited 66.
   `docs/SPEC_DEVIATIONS.md` §6 records that as a pre-existing packet
   observation, not an introduction.
-- **A corrected evidence model** (N11 — "correction of review model").
+- **A corrected evidence model** (N11, "correction of review model").
 - **The DSH compatibility boundary** (N9), with the two allowed pin paths and
   the observation that no lockfile existed. The decision record for the pin
   lives in `docs/dsh-runtime-pin-plan.md`.
@@ -86,7 +86,7 @@ Read off the two documents' own text, not inferred:
 ## What this document does not do
 
 It does not claim that any v0.1 sentence was weakened or rewritten. That claim
-is made where it can be checked — `docs/SPEC_DEVIATIONS.md`, which records the
+is made where it can be checked, in `docs/SPEC_DEVIATIONS.md`, which records the
 M1A scoping decisions and states that no normative sentence of v0.1.1 was
 weakened. Asserting it here without the mapping to support it would be the
 kind of unbacked claim this project exists to prevent.

@@ -52,5 +52,29 @@ for (const [key, a] of stages) {
   else console.log(`  ${key}: no ${a.from}→${a.to} edge in the table — real refusal`);
 }
 
+// every data-attack value on a button must be a key of ATTACKS, and every
+// key of ATTACKS must be triggered by exactly one button
+console.log("\n═══ buttons match the attack table ═══");
+const buttonKeys = [...html.matchAll(/data-attack="([^"]*)"/g)].map(m => m[1]);
+const attackKeys = Object.keys(ATTACKS);
+const attackKeySet = new Set(attackKeys);
+let wiringOk = true;
+for (const key of buttonKeys) {
+  if (!attackKeySet.has(key)) {
+    console.log(`  button "${key}": not a key of ATTACKS`);
+    wiringOk = false;
+    fail++;
+  }
+}
+for (const key of attackKeys) {
+  const hits = buttonKeys.filter(k => k === key).length;
+  if (hits !== 1) {
+    console.log(`  attack "${key}": triggered by ${hits} buttons, expected exactly 1`);
+    wiringOk = false;
+    fail++;
+  }
+}
+console.log(`  ${wiringOk ? "PASS" : "FAIL"}: ${buttonKeys.length} data-attack values, all keys of ATTACKS; ${attackKeys.length} attack keys, each triggered by exactly one button`);
+
 console.log(`\n${fail === 0 ? "PASS" : "FAIL"} — ${fail} dishonest label(s)`);
 process.exit(fail === 0 ? 0 : 1);

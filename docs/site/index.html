@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Colony Kernel — Models propose. Only the kernel commits.</title>
+<title>Colony Kernel: Models propose. Only the kernel commits.</title>
 <meta name="description" content="Deterministic mission control for AI agent colonies: 135 offline tests, zero runtime dependencies, byte-identical replay. Your agents can't lie about passing QA.">
-<meta property="og:title" content="Colony Kernel — Models propose. Only the kernel commits.">
+<meta property="og:title" content="Colony Kernel: Models propose. Only the kernel commits.">
 <meta property="og:description" content="Deterministic mission control for AI agent colonies: 135 offline tests, zero runtime dependencies, byte-identical replay.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://faresrafat3.github.io/colony-kernel/">
@@ -60,8 +60,8 @@
 
 <header>
   <h1>Models propose.<br><em>Only the kernel commits.</em></h1>
-  <p class="sub">Colony Kernel is deterministic mission control for AI-agent colonies. Every state change, budget, and human approval flows through an auditable, fail-closed core — so an agent saying <i>"this passed"</i> is never treated as a verification result.</p>
-  <p class="sub" style="margin-top:14px"><b style="color:var(--acc)">The problem it solves:</b> when you hand work to an AI agent, "I finished and it works" is a <i>claim</i> you cannot verify — and a model that is wrong about its own success is worse than no agent at all. Colony makes the agent <i>propose</i> and a deterministic core <i>decide</i>, so trust comes from replayable evidence, not from the model's word.</p>
+  <p class="sub">Colony Kernel is deterministic mission control for AI-agent colonies. Every state change, budget, and human approval goes through an auditable, fail-closed core. An agent saying <i>"this passed"</i> is not a verification result, and nothing in the kernel treats it as one.</p>
+  <p class="sub" style="margin-top:14px"><b style="color:var(--acc)">The problem it solves.</b> Hand work to an AI agent and "I finished and it works" is a <i>claim</i> you cannot verify. A model that is wrong about its own success is worse than no agent at all. Colony makes the agent <i>propose</i> and a deterministic core <i>decide</i>. Trust comes from replayable evidence, not from the model's word.</p>
   <div class="badges">
     <span class="badge"><b>135</b> offline tests</span>
     <span class="badge"><b>0</b> runtime dependencies</span>
@@ -71,27 +71,27 @@
 
   <div class="audit" style="margin-top:32px">
     <h2 style="margin:0 0 6px;font-size:19px">The problem is measured, not asserted</h2>
-    <p class="sub" style="margin-bottom:20px">From a 2026 study of <b>9,876</b> agent trajectories across 8 model families (arXiv <a href="https://arxiv.org/abs/2606.09863" style="color:var(--acc2)">2606.09863</a>). <i>False success</i> = an agent confidently reporting completion while the environment state shows otherwise.</p>
+    <p class="sub" style="margin-bottom:20px">From a 2026 study of <b>9,876</b> agent trajectories across 8 model families (arXiv <a href="https://arxiv.org/abs/2606.09863" style="color:var(--acc2)">2606.09863</a>). <i>False success</i> means an agent confidently reporting completion while the environment state says otherwise.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
       <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
         <div style="font-size:30px;font-weight:700;color:var(--danger)">44–52%</div>
-        <div style="font-size:13px;color:var(--dim);margin-top:4px">of <b>all failures</b> are false success — single-control domains</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">of <b>all failures</b> are false success in single-control domains</div>
       </div>
       <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
         <div style="font-size:30px;font-weight:700;color:var(--acc)">3%</div>
-        <div style="font-size:13px;color:var(--dim);margin-top:4px">when an <b>independent verifier</b> can check state — the mechanism Colony is built on</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">when an <b>independent verifier</b> can check state, which is the mechanism Colony is built on</div>
       </div>
       <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
         <div style="font-size:30px;font-weight:700;color:var(--warn)">0.65</div>
-        <div style="font-size:13px;color:var(--dim);margin-top:4px">best LLM-judge AUROC — judges read confidence, not state</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">best LLM-judge AUROC. Judges read confidence, not state</div>
       </div>
       <div style="background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px">
         <div style="font-size:30px;font-weight:700;color:var(--acc2)">20–24%</div>
-        <div style="font-size:13px;color:var(--dim);margin-top:4px">of rewritten failures fool even the best detectors — prose is attackable, state is not</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px">of rewritten failures fool even the best detectors. Prose is attackable, state is not</div>
       </div>
     </div>
     <p class="sub" style="margin-top:18px;font-size:13px">
-      The thesis is not ours alone: <b>Arbiter-K</b> (<a href="https://arxiv.org/abs/2604.18652" style="color:var(--acc2)">arXiv 2604.18652</a>, <code>cure-lab/ArbiterOS</code>) shipped a deterministic governance-first kernel first, and <b>Rel(AI)Build</b> (<a href="https://arxiv.org/abs/2606.26924" style="color:var(--acc2)">arXiv 2606.26924</a>) converges on the same mechanisms. Colony's axis is <i>mission control</i> — budgets, approvals bound to transitions, durable rejections — not security interception.
+      The thesis is not ours alone. <b>Arbiter-K</b> (<a href="https://arxiv.org/abs/2604.18652" style="color:var(--acc2)">arXiv 2604.18652</a>, <code>cure-lab/ArbiterOS</code>) shipped a deterministic governance-first kernel first, and <b>Rel(AI)Build</b> (<a href="https://arxiv.org/abs/2606.26924" style="color:var(--acc2)">arXiv 2606.26924</a>) converges on the same mechanisms. Colony's axis is <i>mission control</i>: budgets, approvals bound to transitions, durable rejections. Not security interception.
       <a href="https://github.com/faresrafat3/colony-kernel/blob/main/docs/research-2026-10-13.md" style="color:var(--acc2)">Full write-up →</a>
     </p>
   </div>
@@ -101,23 +101,23 @@
 
 <section class="play" id="tryit">
   <h2>Try to break it</h2>
-  <p class="intro">This is the kernel's real 22-stage transition table, distilled into a live checker. Each button submits a forbidden move a compromised or overconfident agent might attempt. Watch the kernel refuse — with a reason, not an exception. <b>Every one of these is structurally illegal, not just unlikely.</b></p>
+  <p class="intro">The stage pairs below are projected from the kernel's own transition table, so you can press the illegal ones. Each button submits a forbidden move a compromised or overconfident agent might attempt, and the table answers with a reason instead of an exception. <b>Every one of these is illegal by structure, not by likelihood.</b></p>
   <div class="attacks">
     <button class="atk" data-attack="skip-approval"><b>Skip human approval</b><span>Jump straight to publishing</span></button>
     <button class="atk" data-attack="replay-approval"><b>Replay an approval</b><span>Reuse a consumed approval</span></button>
     <button class="atk" data-attack="self-approve"><b>Self-approve</b><span>The proposer approves its own plan</span></button>
-    <button class="atk" data-attack="skip-stage"><b>Skip verification</b><span>Implementation → publish</span></button>
+    <button class="atk" data-attack="jump-to-close"><b>Jump from planning to closed</b><span>Close without an approval decision</span></button>
     <button class="atk" data-attack="mint-budget"><b>Mint budget</b><span>Raise your own spend limit</span></button>
-    <button class="atk" data-attack="mutate-log"><b>Mutate the log</b><span>Edit an accepted event</span></button>
+    <button class="atk" data-attack="reopen-closed"><b>Reopen a closed mission</b><span>A closed mission, published anyway</span></button>
   </div>
-  <div class="verdict" id="verdict">Pick an attack above — the kernel will answer.</div>
+  <div class="verdict" id="verdict">Pick an attack above and the kernel will answer.</div>
 </section>
 
 <section id="proof">
   <h2>The proof, not the promise</h2>
-  <p style="color:var(--dim)">One seeded demo mission, run twice during publication. Two runs are <b>byte-identical</b> — that's the whole point. Below is the <b>complete, unedited output</b> of the run that shipped this page (also served raw as <a href="demo.json" style="color:var(--acc2)">demo.json</a>):</p>
+  <p style="color:var(--dim)">One seeded demo mission, run twice during publication. Both runs are <b>byte-identical</b>, which is the whole point. Below is the <b>complete, unedited output</b> of the run that shipped this page (also served raw as <a href="demo.json" style="color:var(--acc2)">demo.json</a>):</p>
   <pre id="demo">loading demo.json …</pre>
-  <noscript><p style="color:var(--dim)">JavaScript is off — read the full run at <a href="demo.json" style="color:var(--acc2)">demo.json</a>.</p></noscript>
+  <noscript><p style="color:var(--dim)">JavaScript is off. Read the full run at <a href="demo.json" style="color:var(--acc2)">demo.json</a>.</p></noscript>
   <p style="color:var(--dim);margin-top:14px">Reproduce it yourself, offline, in seconds:</p>
 <pre>git clone https://github.com/faresrafat3/colony-kernel &amp;&amp; cd colony-kernel
 npm install
@@ -129,10 +129,10 @@ diff a.json b.json   # empty — byte-identical replay</pre>
 <section>
   <h2>What's inside</h2>
   <div class="grid">
-    <div class="card"><h3>22-stage state machine</h3><p>Default-deny edge table — unlisted transitions are illegal, not "unlikely". Legality precedes storage.</p></div>
+    <div class="card"><h3>22-stage state machine</h3><p>Default-deny edge table. Unlisted transitions are illegal, not "unlikely". Legality precedes storage.</p></div>
     <div class="card"><h3>Apply-once event reducer</h3><p>Accepted events carry canonical hash + CAS version + monotonic sequence. Replay reconstructs identical state.</p></div>
     <div class="card"><h3>Content-addressed approvals</h3><p>SHA-256 over RFC 8785 JCS bytes, bound to the exact transition, consumed ≤1, expired at commit.</p></div>
-    <div class="card"><h3>Budget ledger</h3><p>Immutable limits with CAS rows — agents can't mint resources or vote themselves a raise.</p></div>
+    <div class="card"><h3>Budget ledger</h3><p>Immutable limits with CAS rows. Agents can't mint resources or vote themselves a raise.</p></div>
     <div class="card"><h3>Deny-by-default roles</h3><p>No self-mutation, no self-publication. Reserved public states are structurally unreachable.</p></div>
     <div class="card"><h3>Durable rejections</h3><p>Refused commands leave evidence and never mutate state. Audit trails don't have gaps.</p></div>
   </div>
@@ -140,14 +140,14 @@ diff a.json b.json   # empty — byte-identical replay</pre>
 
 <section>
   <h2>The inversion</h2>
-  <p style="color:var(--dim)">Multi-agent frameworks let the LLM drive workflow state — so workflow is only as reliable as the model. Colony flips the trust boundary: models <i>suggest</i>, a deterministic kernel <i>decides</i>. Verification is proven by replayable evidence, not claimed by the model that wrote the code.</p>
+  <p style="color:var(--dim)">Multi-agent frameworks let the LLM drive workflow state, so workflow is only as reliable as the model. Colony flips the trust boundary: models <i>suggest</i>, a deterministic kernel <i>decides</i>. Verification is proven by replayable evidence, not claimed by the model that wrote the code.</p>
 </section>
 
 <section class="audit">
   <h2>Work with the author</h2>
-  <p><b style="color:var(--ink)">AI Agent Reliability Audit</b> — a fixed-scope engagement for teams shipping AI agents whose outputs they can't fully trust. I audit your agent loop with the same doctrine Colony Kernel is built on: evidence over claims, replay over narratives, fail-closed over fail-open. You get a written findings report and a re-test tier.</p>
+  <p><b style="color:var(--ink)">AI Agent Reliability Audit</b>. A fixed-scope engagement for teams shipping AI agents whose outputs they can't fully trust. I audit your agent loop with the same doctrine Colony Kernel is built on: evidence over claims, replay over narratives, fail-closed over fail-open. You get a written findings report and a re-test tier.</p>
   <p>Colony Kernel <i>is</i> the proof of work for this offer.</p>
-  <a class="cta" href="mailto:faresrafat3@gmail.com?subject=AI%20Agent%20Reliability%20Audit">Book an audit — faresrafat3@gmail.com</a>
+  <a class="cta" href="mailto:faresrafat3@gmail.com?subject=AI%20Agent%20Reliability%20Audit">Book an audit (faresrafat3@gmail.com)</a>
 </section>
 
 <footer>
@@ -161,38 +161,49 @@ diff a.json b.json   # empty — byte-identical replay</pre>
 
 <script>
 // ── Live kernel checker ──────────────────────────────────────────────
-// Stage-level edges, distilled from src/domain/mission/state-machine.ts
-// (the real default-deny table). A stage→stage pair NOT listed here is
-// REFUSED AT THE STAGE TABLE — the path does not exist. Some attacks
-// pass the stage table but are refused one layer down (approval binding,
-// roles, budget); those are labelled honestly as such, not faked.
+// Stage-level projection of the kernel's own transition table
+// (src/domain/mission/state-machine.ts) for all 22 stages: the declared
+// edges plus the stage-agnostic exits that apply to any nonterminal
+// stage (abort, fail, request a revision, recovery, reconciliation).
+// A stage→stage pair that is not listed here has no single-event path in
+// the kernel, so the stage table refuses it. One case cannot be listed:
+// leaving a pause stage by recovery returns to whichever stage the
+// mission paused from. Some attacks pass the stage table but are refused
+// one layer down (approval binding, roles, budget); those are labelled
+// honestly as such, not faked.
 const EDGES = {
-  CREATED:                  ['POLICY_SCREENING', 'ABORTED'],
-  POLICY_SCREENING:         ['RECONNAISSANCE', 'POLICY_REJECTED', 'HUMAN_REVIEW_REQUIRED'],
-  RECONNAISSANCE:           ['RECONNAISSANCE', 'PLANNING'],
-  PLANNING:                 ['CHALLENGE', 'PLANNING'],
-  CHALLENGE:                ['AWAITING_PLAN_APPROVAL', 'PLANNING'],
-  AWAITING_PLAN_APPROVAL:   ['IMPLEMENTATION', 'PLANNING', 'CLOSED', 'HUMAN_REVIEW_REQUIRED', 'AWAITING_PLAN_APPROVAL'],
-  IMPLEMENTATION:           ['IMPLEMENTATION', 'VERIFICATION', 'REVISION'],
-  VERIFICATION:             ['VERIFICATION', 'TECHNICAL_REVIEW', 'REVISION'],
-  REVISION:                 ['IMPLEMENTATION', 'VERIFICATION', 'TECHNICAL_REVIEW'],
-  TECHNICAL_REVIEW:         ['DOCUMENTATION', 'REVISION'],
-  DOCUMENTATION:            ['FINAL_POLICY_GATE', 'REVISION'],
-  FINAL_POLICY_GATE:        ['AWAITING_PUBLISH_APPROVAL', 'POLICY_REJECTED', 'HUMAN_REVIEW_REQUIRED'],
-  AWAITING_PUBLISH_APPROVAL:['READY_TO_PUBLISH', 'REVISION', 'CLOSED', 'HUMAN_REVIEW_REQUIRED', 'AWAITING_PUBLISH_APPROVAL'],
-  READY_TO_PUBLISH:         ['CLOSED'],
-  CLOSED: [], ABORTED: [], FAILED: [],
-  HUMAN_REVIEW_REQUIRED: [], POLICY_REJECTED: []
+  CREATED:                  ['POLICY_SCREENING', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED', 'CREATED'],
+  POLICY_SCREENING:         ['RECONNAISSANCE', 'POLICY_REJECTED', 'HUMAN_REVIEW_REQUIRED', 'ABORTED', 'FAILED', 'REVISION', 'RECONCILIATION_REQUIRED', 'POLICY_SCREENING'],
+  POLICY_REJECTED:          [],
+  RECONNAISSANCE:           ['RECONNAISSANCE', 'PLANNING', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED'],
+  PLANNING:                 ['CHALLENGE', 'PLANNING', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED'],
+  CHALLENGE:                ['AWAITING_PLAN_APPROVAL', 'PLANNING', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED', 'CHALLENGE'],
+  AWAITING_PLAN_APPROVAL:   ['IMPLEMENTATION', 'PLANNING', 'CLOSED', 'HUMAN_REVIEW_REQUIRED', 'AWAITING_PLAN_APPROVAL', 'ABORTED', 'FAILED', 'REVISION', 'RECONCILIATION_REQUIRED'],
+  IMPLEMENTATION:           ['IMPLEMENTATION', 'VERIFICATION', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED'],
+  VERIFICATION:             ['VERIFICATION', 'TECHNICAL_REVIEW', 'REVISION', 'ABORTED', 'FAILED', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED'],
+  REVISION:                 ['IMPLEMENTATION', 'VERIFICATION', 'TECHNICAL_REVIEW', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED'],
+  TECHNICAL_REVIEW:         ['DOCUMENTATION', 'REVISION', 'ABORTED', 'FAILED', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED', 'TECHNICAL_REVIEW'],
+  DOCUMENTATION:            ['FINAL_POLICY_GATE', 'REVISION', 'ABORTED', 'FAILED', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED', 'DOCUMENTATION'],
+  FINAL_POLICY_GATE:        ['AWAITING_PUBLISH_APPROVAL', 'POLICY_REJECTED', 'HUMAN_REVIEW_REQUIRED', 'ABORTED', 'FAILED', 'REVISION', 'RECONCILIATION_REQUIRED', 'FINAL_POLICY_GATE'],
+  AWAITING_PUBLISH_APPROVAL:['READY_TO_PUBLISH', 'REVISION', 'CLOSED', 'HUMAN_REVIEW_REQUIRED', 'AWAITING_PUBLISH_APPROVAL', 'ABORTED', 'FAILED', 'RECONCILIATION_REQUIRED'],
+  READY_TO_PUBLISH:         ['CLOSED', 'ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED', 'READY_TO_PUBLISH'],
+  PUBLIC_ACTION_PENDING:    ['ABORTED', 'FAILED', 'REVISION', 'HUMAN_REVIEW_REQUIRED', 'RECONCILIATION_REQUIRED', 'PUBLIC_ACTION_PENDING'],
+  RECONCILIATION_REQUIRED:  ['ABORTED', 'FAILED'],
+  PUBLISHED:                [],
+  CLOSED:                   [],
+  ABORTED:                  [],
+  FAILED:                   [],
+  HUMAN_REVIEW_REQUIRED:    ['ABORTED', 'FAILED']
 };
 const PUBLISH = 'READY_TO_PUBLISH';
 
-// layer: 'stage' = refused by the transition table (path does not exist)
-//        'deep'  = stage edge is legal, refused one layer down (labelled honestly)
+// layer: 'stage' = the transition table refuses it, no such edge
+//        'deep'  = the stage edge is legal, refusal happens one layer down, labelled honestly
 const ATTACKS = {
   'skip-approval': {
     from: 'IMPLEMENTATION', to: PUBLISH, layer: 'stage',
     title: 'SKIP HUMAN APPROVAL',
-    reason: 'IMPLEMENTATION → READY_TO_PUBLISH is not in the edge table — no such path exists.\nPublication is reachable only via FINAL_POLICY_GATE → AWAITING_PUBLISH_APPROVAL → (human APPROVAL_RECORDED, decision=APPROVED) → READY_TO_PUBLISH.\nLegality precedes storage: the move is refused before any state is touched.'
+    reason: 'IMPLEMENTATION → READY_TO_PUBLISH is not in the edge table: no such path exists.\nPublication is reachable only via FINAL_POLICY_GATE → AWAITING_PUBLISH_APPROVAL → (human APPROVAL_RECORDED, decision=APPROVED) → READY_TO_PUBLISH.\nLegality precedes storage: the move is refused before any state is touched.'
   },
   'jump-to-close': {
     from: 'PLANNING', to: 'CLOSED', layer: 'stage',
@@ -202,12 +213,12 @@ const ATTACKS = {
   'reopen-closed': {
     from: 'CLOSED', to: PUBLISH, layer: 'stage',
     title: 'REOPEN A CLOSED MISSION',
-    reason: 'CLOSED is a terminal stage — it has no exits (state-machine.ts: terminal stages throw ILLEGAL_TRANSITION).\nA closed mission cannot be nudged back toward publication; the only path forward is a new mission.'
+    reason: 'CLOSED is a terminal stage: it has no exits (state-machine.ts: terminal stages throw ILLEGAL_TRANSITION).\nA closed mission cannot be nudged back toward publication; the only path forward is a new mission.'
   },
   'self-approve': {
     from: 'AWAITING_PLAN_APPROVAL', to: 'IMPLEMENTATION', layer: 'deep',
     title: 'SELF-APPROVAL (denied one layer down)',
-    reason: 'Honest answer: the STAGE edge E10 (AWAITING_PLAN_APPROVAL → IMPLEMENTATION, APPROVAL_RECORDED, decision=APPROVED) IS legal — the path exists.\nWhat stops self-approval is a deeper layer: deny-by-default roles. APPROVAL_RECORDED requires an approver identity distinct from the proposer, so a self-signed approval is refused there, not at the stage table.'
+    reason: 'Honest answer: the STAGE edge E10 (AWAITING_PLAN_APPROVAL → IMPLEMENTATION, APPROVAL_RECORDED, decision=APPROVED) IS legal: the path exists.\nWhat stops self-approval is a deeper layer: deny-by-default roles. APPROVAL_RECORDED requires an approver identity distinct from the proposer, so a self-signed approval is refused there, not at the stage table.'
   },
   'replay-approval': {
     from: 'AWAITING_PLAN_APPROVAL', to: 'IMPLEMENTATION', layer: 'deep',
@@ -223,19 +234,26 @@ const ATTACKS = {
 
 function answer(attack) {
   const a = ATTACKS[attack];
-  const legal = (EDGES[a.from] || []).includes(a.to);
   const v = document.getElementById('verdict');
+  if (!a) {
+    // Unknown key: answer with a reason instead of throwing a TypeError.
+    const named = String(attack).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    v.className = 'verdict blocked';
+    v.innerHTML = '<span class="label">UNKNOWN ATTACK</span>: no attack named "' + named + '".';
+    return;
+  }
+  const legal = (EDGES[a.from] || []).includes(a.to);
   if (a.layer === 'deep') {
-    // Stage edge is legal — be honest that the checker proves the stage table,
+    // Stage edge is legal. Be honest that the checker proves the stage table,
     // and the real refusal is one layer down.
     v.className = 'verdict passed';
-    v.innerHTML = '<span class="label">STAGE EDGE IS LEGAL</span> — refused deeper, not here\n\n' + a.title + '\n\n' + a.reason.replace(/\n/g, '\n');
+    v.innerHTML = '<span class="label">STAGE EDGE IS LEGAL</span>: refused deeper, not here\n\n' + a.title + '\n\n' + a.reason.replace(/\n/g, '\n');
   } else if (legal) {
     v.className = 'verdict passed';
-    v.innerHTML = '<span class="label">ACCEPTED</span>\n' + a.title + ' — this transition IS legal. (It should not be — file an issue.)';
+    v.innerHTML = '<span class="label">ACCEPTED</span>\n' + a.title + ': this transition IS legal. (It should not be: file an issue.)';
   } else {
     v.className = 'verdict blocked';
-    v.innerHTML = '<span class="label">REFUSED BY KERNEL</span> — at the stage table\n' + a.title + '\n\n' + a.reason.replace(/\n/g, '\n');
+    v.innerHTML = '<span class="label">REFUSED BY KERNEL</span>: at the stage table\n' + a.title + '\n\n' + a.reason.replace(/\n/g, '\n');
   }
 }
 

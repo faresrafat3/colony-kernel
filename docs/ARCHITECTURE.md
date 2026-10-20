@@ -1,4 +1,4 @@
-# Architecture — Colony Kernel Milestone 1A
+# Architecture: Colony Kernel Milestone 1A
 
 ```
 colony-kernel/
@@ -53,7 +53,7 @@ colony-kernel/
 - Every accepted event increments `stateVersion` **exactly once** and
   `missionSequence` exactly once (asserted inside the storage commit).
 - Uniqueness: `eventId`, `(missionId, missionSequence)`, scope-qualified
-  `idempotencyKey` — all committed with the state update.
+  `idempotencyKey`, all committed with the state update.
 - Reduction is pure; replaying the full stream from a seed reproduces the stored
   state exactly (H-01/H-04).
 - `PUBLIC_ACTION_*` events always fail closed with `PUBLICATION_DISABLED`, and no
@@ -65,4 +65,11 @@ colony-kernel/
 payload/state narrowing predicates) plus the stage-agnostic nonterminal and pause
 blocks. Runtime validation (`decideTransition`), the human-readable table
 (`renderTransitionTable`) and the Mermaid diagram (`renderMermaidStateDiagram`)
-are all generated from it — there is no second, hand-maintained state list.
+are all generated from it: there is no second, hand-maintained state list.
+
+`renderTransitionTable()` prints the 38 declared `EDGES` plus 6 hand-written rows
+that describe the stage-agnostic rules (abort, fail, recovery, the informational
+self-transitions and the reserved public states), and `renderMermaidStateDiagram()`
+prints only the 38 declared edges, so the diagram does not show the stage-agnostic
+exits. The table and the diagram are therefore not two views of one thing, and the
+6 extra rows are the hand-maintained part of that module.

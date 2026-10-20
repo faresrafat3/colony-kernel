@@ -1,4 +1,4 @@
-# DSH runtime pin — plan and decision record
+# DSH runtime pin: plan and decision record
 
 **Status: the pin is NOT established.** This document is the plan the
 normative specification asks for (v0.1.1 §N9: *"Details and decision record:
@@ -44,13 +44,13 @@ explicitly.
 
 ## The two allowed paths (from the specification, quoted)
 
-**PATH A (preferred) — isolated project-local exact installation.** Create the
+**PATH A (preferred): isolated project-local exact installation.** Create the
 Colony package root; `npm install --save-exact @deepseek-ai/dsh@<version>`;
 commit `package-lock.json`; record the lockfile's SHA-256 in the adapter
 manifest. The runtime compatibility probe runs at startup against this pinned
 install.
 
-**PATH B — temporary offline snapshot.** Archive the installed DSH package and
+**PATH B: temporary offline snapshot.** Archive the installed DSH package and
 its transitive dependency tree; generate an exact package manifest/SBOM;
 record a SHA-256 per file; treat it as non-portable and temporary. PATH B is a
 stopgap only if PATH A's install fails offline, and it must be replaced by
@@ -59,7 +59,7 @@ PATH A before Milestone 2.
 ## Decision
 
 **PATH A.** The registry serves exact versions (measured above), so the
-preferred path is available and PATH B's stated purpose — an offline stopgap —
+preferred path is available and PATH B's stated purpose, an offline stopgap,
 does not arise. PATH B also produces a non-portable artifact, which is the
 opposite of what a pin is for.
 
@@ -69,8 +69,8 @@ still published, so it can be pinned exactly. The host runs `0.2.0-rc.2`.
 
 The proposal, for the Owner's ratification:
 
-1. Pin **`0.1.1-rc.2`** first — the version the adapter contract was derived
-   from — so the first adapter milestone is tested against the specification it
+1. Pin **`0.1.1-rc.2`** first (the version the adapter contract was derived
+   from) so the first adapter milestone is tested against the specification it
    implements.
 2. Then probe **`0.2.0-rc.2`** (what the host actually runs) and record the
    result. If the probe passes, the pin moves forward explicitly, with the
@@ -91,7 +91,7 @@ pinning one now would only freeze an unverified claim.
 3. A compatibility probe (v0.1.1 §N9) that runs at startup against that
    pinned install and **fails the startup** when a required symbol, service or
    event is missing.
-4. The probe's recorded output — the receipt that the pinned runtime was
+4. The probe's recorded output, the receipt that the pinned runtime was
    actually exercised, not asserted.
 
 ## What the pin does not do
@@ -107,6 +107,6 @@ pinning one now would only freeze an unverified claim.
 ## Still unestablished
 
 - The pinned version (above: proposed `0.1.1-rc.2`, not ratified).
-- The adapter manifest that would carry the lockfile hash — it ships with the
+- The adapter manifest that would carry the lockfile hash. It ships with the
   M2 adapter, which does not exist yet.
 - The compatibility probe itself (§N9), which lands with the adapter.
