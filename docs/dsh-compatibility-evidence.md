@@ -1,10 +1,11 @@
 # DSH compatibility evidence
 
-**Status: the compatibility probe exists, it has been run against both candidate
-versions, and its output has decided the version question.** The pin moves
-forward from `0.1.1-rc.2` to `0.2.1-rc.2`; the `package.json` change lands in
-the commit that follows the one that adds the probe, with the reason stated in
-`docs/dsh-runtime-pin-plan.md`. The probe's output is in `reports/`.
+**Status: the pin is established.** PATH A has been executed, the
+compatibility probe required by §N9 exists and has run against both candidate
+versions, and its output decided the version: the pin is `0.2.1-rc.2`, the
+version the host runs. The `package.json` change is its own commit; this file
+records what was measured, what was executed, what drifted, and what remains
+open. It states the drift; it does not silently repair it.
 
 Scope: this artifact records the **runtime pin**. It is not adapter
 conformance evidence, it does not certify Milestone 2, and it does not certify
@@ -16,9 +17,10 @@ inspected, and the kernel's own gates do not depend on them.
 
 Provenance: measured on this host on **2026-10-20** (Node v26.12.0, npm
 12.2.0, Linux x86_64), on branch `feat/n9-probe` in the worktree
-`/home/fares/.dsh/worktrees/colony-kernel-probe`. Commit `60d52fe` carries the
-pin; the probe and the receipts are the commit that follows it. Nothing in the
-published checkout `/home/fares/Projects/colony-kernel` was modified.
+`/home/fares/.dsh/worktrees/colony-kernel-probe`. Commit `60d52fe` carried the
+first pin; `dff3dab` added the probe; the commit that follows it moves the pin
+to the version the probe selected. Nothing in the published checkout
+`/home/fares/Projects/colony-kernel` was modified.
 
 Normative basis: `docs/colony-kernel-v0.1.1.md` §N9 (requirements 1–4 and the
 two allowed paths) and the DSH-mapping reference M08 in the same document
@@ -57,33 +59,54 @@ npm cache** instead (§3.4).
 SHA-256 in the adapter manifest. Runtime compatibility probe runs at startup
 against this pinned install."*
 
-The command, run in the worktree, verbatim:
+The command, run in the worktree, verbatim — first for the version the adapter
+contract was derived from, then for the version the probe selected:
 
 ```
 npm install --save-exact @deepseek-ai/dsh@0.1.1-rc.2
+npm install --save-exact --offline @deepseek-ai/dsh@0.2.1-rc.2
 ```
 
-Result (real output): `added 441 packages, and audited 574 packages in 16m`,
-exit status `0`.
+Results (real output): `added 441 packages, and audited 574 packages in 16m`,
+exit status `0`; then `added 250 packages, removed 102 packages, and changed
+204 packages in 20s`, exit status `0`. The second install was resolved from the
+**local npm cache** (`--offline`), so it cost no network.
+
+### 2.1 The first pin: `0.1.1-rc.2` (commit `60d52fe`)
 
 | Fact | Value | Source |
 |---|---|---|
 | Pin method | **PATH A** (project-local exact install) | §N9; the command above |
 | Declared dependency | `"@deepseek-ai/dsh": "0.1.1-rc.2"` — exact, no range | `package.json` → `dependencies` (written by `--save-exact`) |
-| **Lockfile SHA-256** | `5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c` | `sha256sum package-lock.json`, and `git show HEAD:package-lock.json \| sha256sum` — identical |
+| **Lockfile SHA-256** | `5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c` | `sha256sum package-lock.json`, and `git show 60d52fe:package-lock.json \| sha256sum` — identical |
 | Lockfile size | 401752 bytes, `lockfileVersion` 3, 663 package entries | `wc -c`, `node -e` over the lockfile |
 | Installed pinned version | `0.1.1-rc.2` | `npm ls @deepseek-ai/dsh` → `└── @deepseek-ai/dsh@0.1.1-rc.2` |
 | Pinned package entry point | `node_modules/@deepseek-ai/dsh/lib/bin.js` (8274 bytes) | `ls -l` in the worktree |
 | Pinned entry SHA-256 | `c0226687bb20f45c603ec6fe50f3de16d1c3510c3a803304ec575ef9bc366c62` | `sha256sum node_modules/@deepseek-ai/dsh/lib/bin.js` |
-| Lockfile entry for the pin | version `0.1.1-rc.2`, `license` MIT, `bin.dsh` → `lib/bin.js`, integrity as above | `node -e` over `package-lock.json` → `packages["node_modules/@deepseek-ai/dsh"]` |
+| Lockfile entry for the pin | version `0.1.1-rc.2`, `license` MIT, `bin.dsh` → `lib/bin.js`, integrity `sha512-UP1UIh6q3Gme/…` | `node -e` over `package-lock.json` → `packages["node_modules/@deepseek-ai/dsh"]` |
 | Commit carrying the pin | `60d52fe` "PATH A: pin @deepseek-ai/dsh 0.1.1-rc.2 as an exact dependency" | `git log --oneline` |
+
+### 2.2 The pin as it stands: `0.2.1-rc.2` (the commit that moves it)
+
+| Fact | Value | Source |
+|---|---|---|
+| Declared dependency | `"@deepseek-ai/dsh": "0.2.1-rc.2"` — exact, no range, not a dist-tag | `package.json` → `dependencies` (written by `--save-exact`) |
+| **Lockfile SHA-256** | `1dae9830c15065b73dc06409175ddf0abf88f1f458946025285d6773fe0772fc` | `sha256sum package-lock.json`, and `git show HEAD:package-lock.json \| sha256sum` — identical |
+| Lockfile size | 480945 bytes, `lockfileVersion` 3 | `wc -c`, `node -e` over the lockfile |
+| Installed pinned version | `0.2.1-rc.2` | `npm ls @deepseek-ai/dsh` → `└── @deepseek-ai/dsh@0.2.1-rc.2` |
+| Pinned entry SHA-256 | `80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f` (11772 bytes) | `sha256sum node_modules/@deepseek-ai/dsh/lib/bin.js` |
+| Lockfile entry for the pin | version `0.2.1-rc.2`, `license` MIT, `bin.dsh` → `lib/bin.js`, integrity `sha512-tvY+yhfKRifthbqPe/…` | `node -e` over `package-lock.json` → `packages["node_modules/@deepseek-ai/dsh"]` |
+| The pinned bytes == the host's bytes | the same `lib/bin.js` sha256 `80112efe…` as the host's global install | §4.1 — the same published tarball, installed twice |
 
 Two observations, both measured:
 
-- The pinned build is a **different artifact** from the host's global build:
-  the pinned `lib/bin.js` is 8274 bytes with SHA-256 `c0226687…`, the host's
+- The `0.1.1-rc.2` pinned build was a **different artifact** from the host's
+  global build: the pinned `lib/bin.js` is 8274 bytes with SHA-256 `c0226687…`,
+  the host's
   global `lib/bin.js` is 11772 bytes with SHA-256 `80112efe…`. Same name,
-  different build.
+  different build. After the pin moved, the project's own install and the
+  host's global install are the **same bytes** (`80112efe…`) — the same
+  published tarball, installed twice.
 - The milestone-1A lockfile was 82889 bytes with SHA-256
   `f13a57fd571abb63434975ef53b9706413a4ad4f1b554822a29d3329a2013d93`
   (`reports/milestone-1a-manifest.json` → `packageLockSha256`). The pinned
@@ -248,49 +271,60 @@ outside that directory is read.
 
 ## 4. The receipts
 
-Both receipts live in `reports/`. Each records the command that produced it
+Three receipts live in `reports/`. Each records the command that produced it
 and its exit status.
 
 | Receipt | Target | Command | Exit | Verdict |
 |---|---|---|---|---|
-| `reports/dsh-compat-probe-0.1.1-rc.2-pinned.json` | the **pinned project-local install** `0.1.1-rc.2` | `node scripts/dsh-compat-probe.mjs --require --json reports/dsh-compat-probe-0.1.1-rc.2-pinned.json --expect-version 0.1.1-rc.2` | `0` | **PASS** — 33/33 surfaces, capability pass, identity pass |
+| `reports/dsh-compat-probe-0.1.1-rc.2-pinned.json` | the **first pinned project-local install** `0.1.1-rc.2` | `node scripts/dsh-compat-probe.mjs --require --json reports/dsh-compat-probe-0.1.1-rc.2-pinned.json --expect-version 0.1.1-rc.2` | `0` | **PASS** — 33/33 surfaces, capability pass, identity pass |
 | `reports/dsh-compat-probe-0.2.1-rc.2-host.json` | the version the **host runs now**, `0.2.1-rc.2` | `node scripts/dsh-compat-probe.mjs --require --json reports/dsh-compat-probe-0.2.1-rc.2-host.json --project-root /home/fares/.nvm/versions/node/v26.12.0/lib --expect-version 0.2.1-rc.2 --lockfile …/package-lock.json --expected-integrity sha512-tvY+yhf… --integrity-source manual-npm-view` | `0` | **PASS** — 33/33 surfaces, capability pass, identity pass |
+| `reports/dsh-compat-probe-0.2.1-rc.2-pinned.json` | the **pinned project-local install as it now stands**, `0.2.1-rc.2` | `node scripts/dsh-compat-probe.mjs --require --json reports/dsh-compat-probe-0.2.1-rc.2-pinned.json --expect-version 0.2.1-rc.2` | `0` | **PASS** — 33/33 surfaces, capability pass, identity pass |
 
 The host install is probed with `--project-root
 /home/fares/.nvm/versions/node/v26.12.0/lib` so that the host's install *is*
 the project-local install of that root: the "no global fallback" rule is not
 bent to accommodate the measurement, it is satisfied by construction.
 
+The third receipt is the one that closes the loop: it is the probe run against
+the install this repository now pins, with the integrity taken from the
+lockfile — the value a startup gate would compare against.
+
 ### 4.1 What each receipt measured
 
-| | pinned `0.1.1-rc.2` | host `0.2.1-rc.2` |
-|---|---|---|
-| Resolved path | `<worktree>/node_modules/@deepseek-ai/dsh` | `/home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh` |
-| Inside the project root | yes | yes |
-| Global fallback used | **no** | **no** |
-| Declared version = installed version | `0.1.1-rc.2` = `0.1.1-rc.2` | `0.2.1-rc.2` = `0.2.1-rc.2` |
-| Executable (`lib/bin.js`) | 8274 bytes, sha256 `c0226687bb20f45c603ec6fe50f3de16d1c3510c3a803304ec575ef9bc366c62` | 11772 bytes, sha256 `80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f` |
-| Package content hash | `84fc2df49fd0d5d1971ccfd7a402adb4529bddee8dceccc66edac2f95688601a` | `b8e758ede6cc27146be841a2ec4def1b7999990324f34c8be38eaa260e10bb7e` |
-| Adapter dependency-set hash | `55810dc135130ab67822ad13cf1bf76864c5a33b677608b2685fc755b6bb6cf2` | `517277f296337aff4ac0606303ba6ddcf59b349909e93eafb0db87434ba772a3` |
-| Integrity source | `lockfile` | `manual-npm-view` (the registry value, re-hashed from the local cache) |
-| Integrity result | **pass** — the cached tarball re-hashes to `sha512-UP1UIh6q3Gme/…` | **pass** — the cached tarball re-hashes to `sha512-tvY+yhfKRifthbqPe/…` |
-| Surfaces passed | **33 / 33** | **33 / 33** |
-| Missing items | none | none |
+| | pinned `0.1.1-rc.2` | host `0.2.1-rc.2` | pinned `0.2.1-rc.2` (now) |
+|---|---|---|---|
+| Resolved path | `<worktree>/node_modules/@deepseek-ai/dsh` | `/home/fares/.nvm/versions/node/v26.12.0/lib/node_modules/@deepseek-ai/dsh` | `<worktree>/node_modules/@deepseek-ai/dsh` |
+| Inside the project root | yes | yes | yes |
+| Global fallback used | **no** | **no** | **no** |
+| Declared version = installed version | `0.1.1-rc.2` = `0.1.1-rc.2` | `0.2.1-rc.2` = `0.2.1-rc.2` | `0.2.1-rc.2` = `0.2.1-rc.2` |
+| Executable (`lib/bin.js`) | 8274 bytes, sha256 `c0226687bb20f45c603ec6fe50f3de16d1c3510c3a803304ec575ef9bc366c62` | 11772 bytes, sha256 `80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f` | 11772 bytes, sha256 `80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f` |
+| Package content hash | `84fc2df49fd0d5d1971ccfd7a402adb4529bddee8dceccc66edac2f95688601a` | `b8e758ede6cc27146be841a2ec4def1b7999990324f34c8be38eaa260e10bb7e` | `b8e758ede6cc27146be841a2ec4def1b7999990324f34c8be38eaa260e10bb7e` |
+| Adapter dependency-set hash | `55810dc135130ab67822ad13cf1bf76864c5a33b677608b2685fc755b6bb6cf2` | `517277f296337aff4ac0606303ba6ddcf59b349909e93eafb0db87434ba772a3` | `e0b90087e94bb06d88ea2d51b93bf937e2a7d52b2b108b1ea1a430f7021b5ecc` |
+| Lockfile the integrity came from | sha256 `5a490581…` (the `0.1.1-rc.2` lockfile) | sha256 `5a490581…` (the `0.1.1-rc.2` lockfile) | sha256 `1dae9830…` (the `0.2.1-rc.2` lockfile) |
+| Integrity source | `lockfile` | `manual-npm-view` (the registry value, re-hashed from the local cache) | `lockfile` |
+| Integrity result | **pass** — the cached tarball re-hashes to `sha512-UP1UIh6q3Gme/…` | **pass** — the cached tarball re-hashes to `sha512-tvY+yhfKRifthbqPe/…` | **pass** — the cached tarball re-hashes to `sha512-tvY+yhfKRifthbqPe/…` |
+| Surfaces passed | **33 / 33** | **33 / 33** | **33 / 33** |
+| Missing items | none | none | none |
 
-The two packages are different builds of different versions, and both satisfy
-the adapter contract. **No required capability is missing in either version** —
-there is no finding of that kind to record.
+The three receipts are two different builds, probed twice: `0.1.1-rc.2` once,
+and `0.2.1-rc.2` twice — once where the host has it, once where this
+repository pins it. The two `0.2.1-rc.2` receipts agree on the executable and
+package hashes (the same published tarball) and differ only in the
+dependency-set hash, because the project's dependency set is not the host's.
+Both versions satisfy the adapter contract. **No required capability is
+missing in either version** — there is no finding of that kind to record.
 
 ## 5. The version decision
 
-**The pin moves forward from `0.1.1-rc.2` to `0.2.1-rc.2`.**
+**The pin is `0.2.1-rc.2`.** It moved forward from `0.1.1-rc.2` on the
+strength of the probe's output.
 
 The decision follows the rule this repository already wrote down, in
 `docs/dsh-runtime-pin-plan.md` §Decision step 2: *"Then probe the version the
 host actually runs and record the result. If the probe passes, the pin moves
 forward explicitly, with the probe output as the evidence."* The probe passed
 (`reports/dsh-compat-probe-0.2.1-rc.2-host.json`, 33/33, exit 0), so the pin
-moves forward explicitly, with that receipt as the evidence.
+moved forward explicitly, with that receipt as the evidence.
 
 Why this is the right target, and not merely a permitted one:
 
@@ -436,8 +470,10 @@ npm view @deepseek-ai/dsh@0.2.1-rc.2 dist.integrity
 # PATH A, exactly as §N9 writes it
 npm install --save-exact @deepseek-ai/dsh@0.1.1-rc.2
 sha256sum package-lock.json
+npm install --save-exact --offline @deepseek-ai/dsh@0.2.1-rc.2
+sha256sum package-lock.json
 
-# the probe, against the pinned install
+# the probe, against the first pinned install
 node scripts/dsh-compat-probe.mjs --require \
   --json reports/dsh-compat-probe-0.1.1-rc.2-pinned.json \
   --expect-version 0.1.1-rc.2
@@ -450,6 +486,11 @@ node scripts/dsh-compat-probe.mjs --require \
   --lockfile "$PWD/package-lock.json" \
   --expected-integrity "$(npm view @deepseek-ai/dsh@0.2.1-rc.2 dist.integrity)" \
   --integrity-source manual-npm-view
+
+# the probe, against the install this repository now pins
+node scripts/dsh-compat-probe.mjs --require \
+  --json reports/dsh-compat-probe-0.2.1-rc.2-pinned.json \
+  --expect-version 0.2.1-rc.2
 
 # the probe's own tests
 npx vitest run tests/unit/dsh-compat-probe.test.ts

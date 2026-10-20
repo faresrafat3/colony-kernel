@@ -84,7 +84,14 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   this repository had already written down (probe the host's version; if the
   probe passes, the pin moves forward explicitly, with the probe output as
   the evidence). Both versions pass 33/33, so there is no missing capability
-  to record; the change is in its own commit, with the reason.
+  to record; the change is in its own commit, with the reason. The pin is
+  written by `--save-exact` as the literal `0.2.1-rc.2`; the lockfile now
+  hashes to `1dae9830c15065b73dc06409175ddf0abf88f1f458946025285d6773fe0772fc`
+  (the `0.1.1-rc.2` lockfile hashed to `5a490581…`) and records the tarball's
+  SHA-512 integrity, which the probe re-verifies from the local npm cache. A
+  third receipt, `reports/dsh-compat-probe-0.2.1-rc.2-pinned.json`, is the probe
+  run against the install this repository now pins: 33/33, exit 0, no global
+  fallback.
 - Live test counts updated 135 → 147 (`README.md`, `AGENTS.md`, `GOVERNANCE.md`,
   `docs/site/index.html`, `docs/IMPLEMENTATION_STATUS.md`). The claim gate
   refuses any surface that states a different count than the tree produces,

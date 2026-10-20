@@ -31,8 +31,9 @@ What that means concretely:
 - A budget ledger with immutable limits. An agent cannot mint itself resources.
 - Durable rejections. A refused command leaves evidence and never mutates
   state, so the audit trail has no gaps.
-- One pinned runtime dependency (`@deepseek-ai/dsh` 0.1.1-rc.2, which no
-  source file imports yet, the compatibility probe is still to be written),
+- One pinned runtime dependency (`@deepseek-ai/dsh` 0.2.1-rc.2, which no
+  source file imports yet; the compatibility probe that checks it exists and
+  has run against both candidate versions, 33 of 33 surfaces each),
   fully offline, and the demo mission is byte-identical across runs (replay is
   the whole point).
 
