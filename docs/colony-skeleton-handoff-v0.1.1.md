@@ -8,6 +8,8 @@ Implementation status for every acceptance criterion is **NOT_STARTED** — that
 
 Read the [runtime pin plan](dsh-runtime-pin-plan.md) before any native adapter work, and the [independent review protocol](colony-independent-review-protocol.md) for the post-implementation review gate. Existing experiments remain stopped; source mirrors and profile configurations remain unchanged.
 
+The [DSH compatibility evidence](dsh-compatibility-evidence.md) records the measured host runtime, the PATH A install and the committed lockfile's SHA-256. The pin remains unestablished: §N9's startup compatibility probe does not exist yet, and the pinned version is not ratified.
+
 ## Ordered implementation slices (updated for v0.1.1)
 
 1. **Contracts, envelopes and command seam.** Closed schemas for all 14 persisted types (N5), the 40-type closed event vocabulary (N2), ApprovalRequest/ApprovalRecord with content-addressed subjects (N1), canonical serialization (RFC 8785). `InMemoryColonyStorage` first. Done: A04, A05, A08, A10–A12 pass through public interfaces on in-memory storage.
