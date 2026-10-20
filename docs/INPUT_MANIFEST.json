@@ -4,12 +4,12 @@
   "normativeSpecification": {
     "path": "colony-kernel-v0.1.1.md",
     "sha256": "d3c8e715c09c446c2934d1177bb86b3f762e7cce055d28f0fa2739dc8b1af841",
-    "bytes": 43893
+    "bytes": 36172
   },
   "handoff": {
     "path": "colony-skeleton-handoff-v0.1.1.md",
-    "sha256": "ed15ef7b5cb5e7c2b443b5f13f42f9ebe43439744efb9480e99350d80a2745c1",
-    "bytes": 7161
+    "sha256": "fffbb02085fb5adb9ba2f8d424e9721dfe0e7ce7360414109b879aef5c6165f6",
+    "bytes": 5655
   },
   "historicalBaseline": {
     "path": "colony-kernel-v0.1.md",

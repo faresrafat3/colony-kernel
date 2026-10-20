@@ -73,8 +73,7 @@ You extend this by implementing a port:
 
 ## Current milestone (2026-10-20)
 
-M1A shipped v0.1.0: deterministic local core, zero runtime deps, byte-identical demo, CI green. The tally that release verified lives in `reports/milestone-1a-manifest.json`; the live count is `tests/**` above.
+M1A shipped v0.1.0: deterministic local core, zero runtime deps, byte-identical demo, CI green. The tally that release verified lives in `reports/milestone-1a-manifest.json`; the live count is `tests/**` above. HEAD now pins **one** runtime dependency (`@deepseek-ai/dsh` 0.1.1-rc.2, not yet imported by any source file, no compatibility probe; see `docs/dsh-compatibility-evidence.md`).
 
 Independent review completed 2026-10-05. Milestone 1A passed with two low-severity findings (`reports/INDEPENDENT_REVIEW_1A.md`). F1, the human-authority guard's empty-list precondition, is closed at the application layer. F2 was a recorded observation with no severity. R8's precondition is therefore met: M2 adapter work may start, but M2 itself is unimplemented and must come back for its own review before merge.
-
 Deferred: durable storage adapter (M1B), crash matrix, migration engine, filesystem workspace isolation, DSH adapter (M2).

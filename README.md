@@ -1,6 +1,6 @@
 # Colony Kernel
 
-[![verify](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml/badge.svg)](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml) [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen.svg)](package.json) [![deps](https://img.shields.io/badge/runtime%20deps-0-success.svg)](package.json)
+[![verify](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml/badge.svg)](https://github.com/faresrafat3/colony-kernel/actions/workflows/verify.yml) [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen.svg)](package.json) [![deps](https://img.shields.io/badge/runtime%20deps-1-informational.svg)](package.json)
 
 A deterministic mission-control kernel for AI-agent colonies: models propose, only the kernel commits.
 
