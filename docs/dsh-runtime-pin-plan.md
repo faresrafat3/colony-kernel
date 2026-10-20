@@ -1,7 +1,6 @@
 # DSH runtime pin: plan and decision record
 
-**Status: the version is decided and the pin moves forward; the `package.json`
-change lands in the commit that follows the one that adds the probe.** This
+**Status: the pin is established at `0.2.1-rc.2`.** This
 document is the plan the normative specification asks for (v0.1.1 §N9: *"Details
 and decision record: `dsh-runtime-pin-plan.md`"*), plus the decision record to
 date. No adapter work depends on it yet, and nothing in this repository
@@ -82,7 +81,9 @@ The rule this document proposed, now executed:
    from) so the first adapter milestone is tested against the specification it
    implements. — **Done.** `npm install --save-exact @deepseek-ai/dsh@0.1.1-rc.2`,
    commit `60d52fe`; lockfile sha256
-   `5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c`.
+   `5a490581d574512c3136ec984460e1e365b01dc27b70e855679bb54ce48e749c`. The pin's
+   current lockfile, after the move below, is sha256
+   `1dae9830c15065b73dc06409175ddf0abf88f1f458946025285d6773fe0772fc`.
 2. Then probe the version the host actually runs and record the result. If the
    probe passes, the pin moves forward explicitly, with the probe output as
    the evidence. If it fails, the difference is a finding, not a reason to
@@ -110,8 +111,8 @@ it runs, and its output is the record.
 ## What executing PATH A produces (the acceptance evidence)
 
 1. The Colony package root with `@deepseek-ai/dsh` as an **exact**
-   (`--save-exact`) dependency at the pinned version. — **Done** (the version
-   moved forward in the follow-up commit; see the decision above).
+   (`--save-exact`) dependency at the pinned version. — **Done**: `0.2.1-rc.2`,
+   written by `--save-exact`.
 2. A committed `package-lock.json` whose SHA-256 is recorded in the adapter
    manifest. — **Half done.** The lockfile is committed and its SHA-256 is
    measured; the manifest that would carry it does not exist yet, because it
