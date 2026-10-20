@@ -1,7 +1,7 @@
 # colony-kernel: Show HN / Reddit / X post
 
-> Numbers in this post were measured on 2026-10-20: 135 deterministic tests
-> (`npm run claims`), 3669 lines of TypeScript under `src/`, demo output 5613
+> Numbers in this post were measured on 2026-10-21: 147 deterministic tests
+> (`npm run claims`), 3733 lines of TypeScript under `src/`, demo output 5613
 > bytes byte-identical across runs. The independent review completed
 > 2026-10-05 (`reports/INDEPENDENT_REVIEW_1A.md`).
 
@@ -37,7 +37,7 @@ What that means concretely:
   fully offline, and the demo mission is byte-identical across runs (replay is
   the whole point).
 
-It is ~3.7k lines of strict TypeScript with 135 deterministic tests and a
+It is ~3.7k lines of strict TypeScript with 147 deterministic tests and a
 verify gate that measures its own claims instead of trusting them.
 
 Try to break it on the live site. The checker is projected from the kernel's
@@ -86,7 +86,7 @@ forbidden move (skip approval, self-approve, mint budget, replay an approval,
 jump to closed, reopen a closed mission) and watch it refuse with a reason.
 https://faresrafat3.github.io/colony-kernel/
 
-~3.7k lines of strict TS, one pinned dep, 135 deterministic tests. MIT.
+~3.7k lines of strict TS, one pinned dep, 147 deterministic tests. MIT.
 
 Honest about scope: M1A is a deterministic local core, fake runtime, in-memory
 storage, no live model. The independent review completed on 2026-10-05:
@@ -119,7 +119,7 @@ What's inside:
 • Content-addressed approvals, consumed exactly once
 • Immutable budget limits (agents can't mint resources)
 • Durable rejections (audit trail has no gaps)
-• 1 pinned runtime dep (not yet imported)
+• 1 pinned runtime dep (no src/ import yet)
 
 **4/**
 The demo runs byte-identical every time. That's the whole point. Replay IS the
@@ -136,7 +136,7 @@ Colony's axis is mission control rather than security interception:
 budgets, approvals bound to transitions, durable rejections.
 
 **6/**
-~3.7k lines strict TypeScript · 135 deterministic tests · MIT
+~3.7k lines strict TypeScript · 147 deterministic tests · MIT
 
 Honest scope: M1A is a deterministic local core. No live model. Review
 completed 2026-10-05: M1A passed with two low-severity findings; F1 closed,
