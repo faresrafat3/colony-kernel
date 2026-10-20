@@ -314,6 +314,46 @@ dependency-set hash, because the project's dependency set is not the host's.
 Both versions satisfy the adapter contract. **No required capability is
 missing in either version** — there is no finding of that kind to record.
 
+### 4.2 A structural difference the probe does not cover — recorded, not worked around
+
+The 33 surfaces pass in both versions, but the two packages are not the same
+shape. Measured on 2026-10-20, by installing each version into its own
+directory and counting:
+
+```
+find node_modules -name "invariant.js" -path "*/lib/*" -printf "%h\n" | xargs -n1 dirname | sort -u | wc -l
+grep -rl "scopedSubjectResolvers" node_modules/@deepseek-ai/ | head
+```
+
+| | `0.1.1-rc.2` | `0.2.1-rc.2` (the pin) |
+|---|---|---|
+| Packages shipping a `lib/invariant.js` companion file | **225** | **0** |
+| `dsh-scope/lib/` contents | `index.js`, `invariant.js`, `types/` | `index.js`, `types/` |
+| `scopedSubjectResolvers` (the generated scoped-event routing-subject table) | present in `dsh-scope/lib/invariant.js` | **absent from the whole tree** |
+| `dsh-scope`'s public exports | `scopeTarget`, `createScope`, `ScopedLayers`, … (11) | the same 11 |
+
+In `0.1.1-rc.2` every package shipped a generated `lib/invariant.js` whose
+first section is the scoped-event routing-subject table — the map from an event
+name to the subject its scope is filtered by (`"agent/status" → args[0].agent`,
+`"session/created" → null`, and so on). In `0.2.1-rc.2` that generated
+companion file is gone from every package, and the identifier
+`scopedSubjectResolvers` appears nowhere in the installed tree. The
+`dsh-scope` package's **public exports are unchanged**, which is why all 33
+surfaces still pass.
+
+**What this means, stated plainly:** the adapter-facing surface the probe
+checks is stable across the two versions, but the *scoped routing* of those
+events is not something the probe verifies — the probe checks that an event
+name is declared, not how its scope is resolved. §N9 requirement 7 (DSH events
+translated into Colony-owned events) and requirement 8 (unknown DSH events
+logged but unable to advance mission state) are adapter-side obligations whose
+implementation will depend on how the version it runs under routes scoped
+events. The M2 adapter must answer that against the version it will run; this
+record exists so the question is asked rather than assumed away.
+
+It is recorded here as a finding, and it did not weaken a requirement: the
+probe still checks all 33 surfaces, and the pin still names an exact version.
+
 ## 5. The version decision
 
 **The pin is `0.2.1-rc.2`.** It moved forward from `0.1.1-rc.2` on the
@@ -411,22 +451,28 @@ Listed as unresolved. None of these is closed by this file.
    mission state, and "DSH upgrade requires adapter tests before use" are
    adapter-side obligations, not probe-side checks. The probe answers
    requirements 1–4 only, which is what this work was scoped to.
-7. **The install needs the network.** PATH A resolved 441 packages against the
+7. **The two versions route scoped events differently, and the probe does not
+   check that** (§4.2). `0.1.1-rc.2` shipped a generated per-package
+   `lib/invariant.js` carrying the scoped-event routing-subject table (225
+   packages); `0.2.1-rc.2` ships none of them, and the public `dsh-scope`
+   exports are unchanged. The adapter's event translation must be built
+   against the version it will run under; the probe checks event *names* only.
+8. **The install needs the network.** PATH A resolved 441 packages against the
    public registry in 16 minutes; the lockfile pins 663 packages. CI (`npm ci`)
    needs registry access to reproduce the tree, and PATH B remains the
    documented fallback if that is not acceptable. (The re-install for the
    version move was resolved from the local npm cache, not the network.)
-8. **The milestone-1A records describe a past tree.** `reports/milestone-1a-manifest.json`
+9. **The milestone-1A records describe a past tree.** `reports/milestone-1a-manifest.json`
    records `runtimeDependencies: {}` and the 1A lockfile hash. That stays true
    of milestone 1A and is not rewritten (milestone records are superseded,
    never rewritten), but anyone reading it as the state of HEAD will be misled.
-9. **The "zero runtime dependencies" claim was false in four places — corrected
+10. **The "zero runtime dependencies" claim was false in four places — corrected
    2026-10-20.** `AGENTS.md`, `docs/site/index.html` (three places) and
    `docs/IMPLEMENTATION_STATUS.md` now state the one pinned dependency. No
    gate enforces the dependency count — `scripts/check-claims.mjs` measures the
    test count only — so the wording is the entire mechanism, which is why the
    tree could verify green while stating a false claim.
-10. **The handoff's recorded hash changed** when the link to this artifact was
+11. **The handoff's recorded hash changed** when the link to this artifact was
     added. `docs/INPUT_MANIFEST.json` carries the measured handoff hash and
     size; `reports/milestone-1a-manifest.json` was deliberately left alone (it
     describes the tree milestone 1A verified). The same note as before applies:

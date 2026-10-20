@@ -92,6 +92,16 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   third receipt, `reports/dsh-compat-probe-0.2.1-rc.2-pinned.json`, is the probe
   run against the install this repository now pins: 33/33, exit 0, no global
   fallback.
+- A **structural difference between the two DSH versions** is now on the record,
+  measured by installing each version into its own directory: `0.1.1-rc.2` ships a
+  generated `lib/invariant.js` in 225 packages, carrying the scoped-event
+  routing-subject table; `0.2.1-rc.2` ships none of them, and the identifier
+  `scopedSubjectResolvers` appears nowhere in its tree. The `dsh-scope` public
+  exports are unchanged, so all 33 probed surfaces still pass — but the probe
+  checks that an event *name* is declared, not how a scoped event is routed,
+  and §N9's event-translation requirements (7 and 8) are adapter-side work that
+  must be built against the version the adapter will run under. Recorded as a
+  finding; no requirement was weakened to accommodate it.
 - Live test counts updated 135 → 147 (`README.md`, `AGENTS.md`, `GOVERNANCE.md`,
   `docs/site/index.html`, `docs/IMPLEMENTATION_STATUS.md`). The claim gate
   refuses any surface that states a different count than the tree produces,
