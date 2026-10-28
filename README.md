@@ -78,6 +78,8 @@ Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memor
 | `docs/IMPLEMENTATION_STATUS.md` | What is implemented vs deferred, with actual gate results |
 | `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 81 added since (147 total) |
 | `docs/SPEC_DEVIATIONS.md` | Scoping decisions, none normative-weakening |
+| `GLOSSARY.md` | The words this project means: 52 terms, each with an Avoid list |
+| `docs/adr/` | Decision records for the choices the normative spec relies on |
 | `docs/dsh-runtime-pin-plan.md` | The DSH runtime pin: plan and decision record (the pin is `0.2.1-rc.2`) |
 | `docs/colony-independent-review-protocol.md` | How an independent review is run and what it unlocks |
 | `docs/INPUT_MANIFEST.json` | SHA-256 of the normative inputs |

@@ -1,0 +1,3 @@
+# Human authority gate uses role exclusion, not an allowlist
+
+The approval gate checks `!agentRoleIds.includes(decidedBy)` rather than maintaining a separate allowlist of human authorities. The agent-role list is derived from the Role Registry's own manifests, so it cannot drift from the roles the kernel actually knows; a separate allowlist would risk becoming stale or empty, and an empty allowlist would make every identity pass (the unsafe direction). The trade-off is structural consistency against defense-in-depth: the precondition (non-empty agent list) is enforced by RoleRegistry refusing to be built empty.
