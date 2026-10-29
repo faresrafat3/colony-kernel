@@ -157,6 +157,34 @@ describe("H2 — the adapter never does the kernel's job", () => {
     expect(fields.outputBytes).toBe(new TextEncoder().encode(text).length);
   });
 
+  it("a live reply is redacted before it becomes an artifact (N8 req 13)", () => {
+    const token = `ghp_${"a".repeat(36)}`;
+    const key = "-----BEGIN RSA PRIVATE KEY-----\nMIIEsecretbody\n-----END RSA PRIVATE KEY-----";
+    const { run } = stubRunner({ stdout: `result: ${token} and header ${key} done` });
+    const a = new HermesAgentRuntime({ mode: "live", profile: "scout", run });
+    const r = a.invoke(invocation());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const fields = r.value.artifact?.fields as Record<string, unknown>;
+    const output = String(fields.output);
+    expect(output).not.toContain(token);
+    expect(output).not.toContain("MIIEsecretbody");
+    expect(output).toContain("[REDACTED]");
+    expect(output).toContain("done");
+    // The recorded identity describes what is actually stored.
+    expect(fields.outputSha256).toBe(sha256Hex(output));
+    expect(fields.outputBytes).toBe(new TextEncoder().encode(output).length);
+  });
+
+  it("a configured pattern list replaces the defaults", () => {
+    const { run } = stubRunner({ stdout: "code SECRET-123 ok" });
+    const a = new HermesAgentRuntime({ mode: "live", profile: "scout", run, secretPatterns: [/SECRET-\d+/g] });
+    const r = a.invoke(invocation());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(String((r.value.artifact?.fields as Record<string, unknown>).output)).toBe("code [REDACTED] ok");
+  });
+
   it("the host is never told the mission id, the state, or that an approval exists", () => {
     const { run, calls } = stubRunner({ stdout: "ok" });
     const a = new HermesAgentRuntime({ mode: "live", profile: "scout", run });

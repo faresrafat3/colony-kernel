@@ -54,6 +54,11 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   the previous code-point comparator ordered astral characters (emoji) wrongly,
   so a payload or artifact with such a key hashed differently from a conforming
   JCS implementation. Tests 166 → 167.
+- Live host output is redacted before it becomes an artifact (N8 req 13): a
+  default pattern list covers PEM private-key blocks (a truncated header
+  redacts to the end), AWS/GitHub/Anthropic/Slack/Google token shapes and
+  `client_secret` assignments, with an optional `secretPatterns` override. The
+  recorded hash and byte count describe the redacted text. Tests 167 → 169.
 
 ### Added
 

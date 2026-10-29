@@ -82,6 +82,33 @@ export interface HermesAgentRuntimeOptions {
     signal: NodeJS.Signals | null;
     error?: Error;
   };
+  /** Patterns redacted from live output; replaces the defaults (N8 req 13). */
+  secretPatterns?: readonly RegExp[];
+}
+
+/**
+ * Default secret shapes kept out of stored artifacts (N8 req 13). Value-shaped,
+ * not prose: a PEM block (or a truncated header, redacted to end of output) and
+ * the common token prefixes. A caller with other formats passes `secretPatterns`.
+ */
+export const DEFAULT_SECRET_PATTERNS: readonly RegExp[] = [
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
+  // A header without its END (truncated key): redact the remainder, fail closed.
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*/g,
+  /\bAKIA[0-9A-Z]{16}\b/g,
+  /\bgh[pousr]_[A-Za-z0-9]{20,}\b/g,
+  /\bsk-[A-Za-z0-9_-]{20,}\b/g,
+  /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g,
+  /\bAIza[0-9A-Za-z_-]{35}\b/g,
+  /\bclient_secret[ \t]*[:=][ \t]*\S{8,}/gi,
+];
+
+/** Replace every match of every pattern with a marker; patterns are cloned. */
+export function redactSecrets(text: string, patterns: readonly RegExp[] = DEFAULT_SECRET_PATTERNS): string {
+  return patterns.reduce((out, pattern) => {
+    const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+    return out.replace(new RegExp(pattern.source, flags), "[REDACTED]");
+  }, text);
 }
 
 /**
@@ -106,6 +133,7 @@ export class HermesAgentRuntime implements AgentRuntime {
   private readonly timeoutMs: number;
   private readonly now: () => Date;
   private readonly run: NonNullable<HermesAgentRuntimeOptions["run"]>;
+  private readonly secretPatterns: readonly RegExp[];
   private cursor = 0;
   /** IdempotencyKey → the record already produced for it. */
   private readonly idempotent = new Map<string, AgentInvocationRecord>();
@@ -124,6 +152,7 @@ export class HermesAgentRuntime implements AgentRuntime {
     this.timeoutMs = options.timeoutMs ?? 60_000;
     this.now = options.now ?? (() => new Date());
     this.run = options.run ?? defaultRunner;
+    this.secretPatterns = options.secretPatterns ?? DEFAULT_SECRET_PATTERNS;
 
     if (this.mode === "live" && this.profile.trim() === "") {
       // Fail closed at construction: a live adapter with no target would
@@ -268,17 +297,20 @@ export class HermesAgentRuntime implements AgentRuntime {
 
     // The host answered. Its text becomes an ARTIFACT — a claim, content-addressed
     // and stored — never a verification result and never a state transition.
+    // Secrets are redacted before storage (N8 req 13); the recorded hash and
+    // byte count describe the redacted text, which is what is actually stored.
+    const redacted = redactSecrets(stdout, this.secretPatterns);
     const artifact: ArtifactContent = {
       fields: {
         producedBy: "hermes-adapter",
         profile: this.profile,
         capabilityId: request.capabilityId,
         objective: request.input.objective,
-        outputSha256: sha256Hex(stdout),
-        outputBytes: new TextEncoder().encode(stdout).length,
+        outputSha256: sha256Hex(redacted),
+        outputBytes: new TextEncoder().encode(redacted).length,
         // The text itself is carried, but its identity is the hash. Two hosts
         // producing the same text produce the same artifact id downstream.
-        output: stdout,
+        output: redacted,
       },
     };
     const record: AgentInvocationRecord = {
