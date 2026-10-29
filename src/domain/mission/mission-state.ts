@@ -21,6 +21,8 @@ export interface MissionState {
     textOnlyPackageReworkCount: number;
     humanResumptionCount: number;
   };
+  /** Severity of the revision cycle in flight; null outside REVISION (N6). */
+  pendingRevisionSeverity: "content" | "infrastructure" | null;
   /** Digests of the currently bound plan/candidate/verification subjects. */
   boundPlanSha256: string | null;
   boundCandidateSha256: string | null;
@@ -56,6 +58,7 @@ export function initialMissionState(input: {
     title: input.title,
     resumeStage: null,
     counters: emptyCounters(),
+    pendingRevisionSeverity: null,
     boundPlanSha256: null,
     boundCandidateSha256: null,
     boundVerificationSha256: null,

@@ -55,9 +55,16 @@ export const EDGES: readonly Edge[] = [
   { id: "E16", from: S.VERIFICATION, event: ET.REVISION_REQUESTED, to: S.REVISION, requiresApproval: false },
   { id: "E17", from: S.TECHNICAL_REVIEW, event: ET.TECHNICAL_REVIEW_COMPLETED, to: S.DOCUMENTATION, requiresApproval: false },
   { id: "E18", from: S.TECHNICAL_REVIEW, event: ET.REVISION_REQUESTED, to: S.REVISION, requiresApproval: false },
-  { id: "E19i", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.IMPLEMENTATION },
-  { id: "E19v", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.VERIFICATION },
-  { id: "E19t", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.TECHNICAL_REVIEW },
+  // E19: leaving REVISION returns to the stage that requested the change. An
+  // infrastructure-only retry charges verificationInfraRetryCount; a content
+  // revision charges revisionCount. N6 keeps the two budgets separate, so a run
+  // of infra flakes cannot spend the content-revision allowance.
+  { id: "E19i", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.IMPLEMENTATION && s.pendingRevisionSeverity !== "infrastructure" },
+  { id: "E19v", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.VERIFICATION && s.pendingRevisionSeverity !== "infrastructure" },
+  { id: "E19t", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.TECHNICAL_REVIEW && s.pendingRevisionSeverity !== "infrastructure" },
+  { id: "E19i-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.resumeStage === S.IMPLEMENTATION && s.pendingRevisionSeverity === "infrastructure" },
+  { id: "E19v-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.resumeStage === S.VERIFICATION && s.pendingRevisionSeverity === "infrastructure" },
+  { id: "E19t-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.resumeStage === S.TECHNICAL_REVIEW && s.pendingRevisionSeverity === "infrastructure" },
   { id: "E21", from: S.DOCUMENTATION, event: ET.DOCUMENTATION_COMPLETED, to: S.FINAL_POLICY_GATE, requiresApproval: false },
   { id: "E22", from: S.DOCUMENTATION, event: ET.REVISION_REQUESTED, to: S.REVISION, requiresApproval: false },
   { id: "E23", from: S.FINAL_POLICY_GATE, event: ET.FINAL_GATE_COMPLETED, to: S.AWAITING_PUBLISH_APPROVAL, requiresApproval: false, matches: (_s, p) => p["verdict"] === V.allowed, guardLabel: `verdict=${V.allowed}` },
@@ -68,7 +75,11 @@ export const EDGES: readonly Edge[] = [
   { id: "E27", from: S.AWAITING_PUBLISH_APPROVAL, event: ET.MISSION_CLOSED, to: S.CLOSED, requiresApproval: true, matches: (_s, p) => REJECTED(_s, p), guardLabel: "package rejected" },
   { id: "E29", from: S.AWAITING_PUBLISH_APPROVAL, event: ET.APPROVAL_EXPIRED, to: S.HUMAN_REVIEW_REQUIRED, requiresApproval: false },
   { id: "E26b", from: S.AWAITING_PUBLISH_APPROVAL, event: ET.APPROVAL_REQUESTED, to: S.AWAITING_PUBLISH_APPROVAL, requiresApproval: false },
-  { id: "E30", from: S.READY_TO_PUBLISH, event: ET.MISSION_CLOSED, to: S.CLOSED, requiresApproval: true },
+  // No fresh approval on the local close: READY_TO_PUBLISH is only enterable
+  // through E26, which consumed the package grant (spec N10: "consumed package
+  // grant ... →CLOSED (local close) only"). The old requireApproval flag
+  // described that entry, not this exit, and nothing enforced it.
+  { id: "E30", from: S.READY_TO_PUBLISH, event: ET.MISSION_CLOSED, to: S.CLOSED, requiresApproval: false },
   { id: "E31", from: S.CREATED, event: ET.MISSION_ABORTED, to: S.ABORTED, requiresApproval: false },
 ];
 

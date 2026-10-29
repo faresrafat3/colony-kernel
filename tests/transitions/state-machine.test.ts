@@ -1,6 +1,6 @@
 /** A. State machine: legal/illegal transitions, terminal immutability, bounded cycles. */
 import { describe, expect, it } from "vitest";
-import { buildTestKernel, toPlanGate } from "../../src/testing/builders/test-kernel.js";
+import { buildTestKernel, toPlanGate, toImplementation } from "../../src/testing/builders/test-kernel.js";
 import { renderTransitionTable, renderMermaidStateDiagram, EDGES } from "../../src/domain/mission/state-machine.js";
 import { ALL_STAGES, TERMINAL_STAGES, PAUSE_STAGES, RESERVED_PUBLIC_STAGES, COUNTER_LIMITS, MissionStage as S } from "../../src/domain/mission/stages.js";
 import { ALL_EVENT_TYPES, EVENT_TYPE_COUNT } from "../../src/domain/events/vocabulary.js";
@@ -123,6 +123,45 @@ describe("A. state machine", () => {
     expect(table).toContain("E10");
     expect(mermaid).toContain("AWAITING_PLAN_APPROVAL --> IMPLEMENTATION: E10");
     expect(EDGES.length).toBeGreaterThan(20);
+  });
+
+  it("A-11: an infrastructure revision charges its own counter, not the content budget", () => {
+    const k = buildTestKernel();
+    const { missionId } = toImplementation(k);
+    k.kernel.finalizeArtifact({ missionId, roleId: "verifier", artifactType: "verification_report", content: { fields: { result: "pass" } }, slot: "verification" });
+    k.kernel.completeImplementation(missionId);
+    k.kernel.completeVerification(missionId);
+    expect(k.kernel.getMission(missionId)?.stage).toBe("TECHNICAL_REVIEW");
+    const ask = (severity: "content" | "infrastructure") =>
+      k.kernel.requestRevision({
+        missionId,
+        sourceArtifactId: "art-1",
+        sourceArtifactHash: `hash-${severity}`,
+        requestedByRole: "verifier",
+        issueCode: severity === "infrastructure" ? "VERIFICATION_INFRASTRUCTURE_FAILURE" : "VERIFICATION_CONTENT_FAILURE",
+        severity,
+        evidence: [],
+        requiredChange: "rerun",
+      });
+    ask("infrastructure");
+    k.kernel.completeRevision(missionId, "reran the runner");
+    let counters = k.kernel.getMission(missionId)?.counters;
+    expect(counters?.verificationInfraRetryCount).toBe(1);
+    expect(counters?.revisionCount).toBe(0);
+    ask("content");
+    k.kernel.completeRevision(missionId, "changed the artifact");
+    counters = k.kernel.getMission(missionId)?.counters;
+    expect(counters?.verificationInfraRetryCount).toBe(1);
+    expect(counters?.revisionCount).toBe(1);
+  });
+
+  it("A-12: READY_TO_PUBLISH is entered only through the approval edge, so its local close needs no second approval", () => {
+    // The invariant that makes E30 safe: no path into the state skips the
+    // consumed package grant, so closing needs nothing more.
+    const entries = EDGES.filter((e) => e.to === S.READY_TO_PUBLISH);
+    expect(entries.map((e) => e.id)).toEqual(["E26"]);
+    expect(entries.every((e) => e.requiresApproval)).toBe(true);
+    expect(EDGES.find((e) => e.id === "E30")?.requiresApproval).toBe(false);
   });
 
   it("A-10: 22 canonical stages, 40 event types, 5 terminal, 2 pause", () => {

@@ -890,7 +890,7 @@ export class ColonyKernel {
       ET.REVISION_REQUESTED,
       state,
       this.actorFor(input.requestedByRole, "ADMITTED_INVOCATION", input.requestedByRole),
-      { revisionId: request.revisionId, issueCode: request.issueCode, dedupeKey: revisionDedupeKey({ issueCode: request.issueCode, sourceArtifactHash: request.sourceArtifactHash, requestedByRoleId: request.requestedByRoleId }) },
+      { revisionId: request.revisionId, issueCode: request.issueCode, severity: request.severity, dedupeKey: revisionDedupeKey({ issueCode: request.issueCode, sourceArtifactHash: request.sourceArtifactHash, requestedByRoleId: request.requestedByRoleId }) },
       { correlationId: this.ids.nextId("corr"), idempotencyKey: `revision:${request.revisionId}:requested` },
     );
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);

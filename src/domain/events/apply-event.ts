@@ -101,9 +101,20 @@ export function applyEvent(state: MissionState, event: EventEnvelope): MissionSt
   if (isPause(from) && !isPause(to)) {
     next = { ...next, resumeStage: null };
   }
-  // Revision entry records the returning stage (E19 target); re-entries keep it.
+  // Revision entry records the returning stage (E19 target) and the severity the
+  // requesting event declared, so the exit can charge the right counter. A log
+  // written before this field existed reads as a content revision, which is what
+  // it charged.
   if (to === "REVISION" && from !== "REVISION") {
-    next = { ...next, resumeStage: from };
+    next = {
+      ...next,
+      resumeStage: from,
+      pendingRevisionSeverity: event.payload["severity"] === "infrastructure" ? "infrastructure" : "content",
+    };
+  }
+  // Leaving REVISION clears the severity; nothing else reads it.
+  if (from === "REVISION" && to !== "REVISION") {
+    next = { ...next, pendingRevisionSeverity: null };
   }
 
   // Subject binding updates carried by payload (plan/candidate/verification).

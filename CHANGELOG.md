@@ -82,6 +82,18 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   now covered, so a tampered actor changes the published log hash. The demo's
   hash moves to `84dcec61…`; `docs/site/demo.json` is regenerated. Tests
   173 → 174.
+- An infrastructure-only revision charges `verificationInfraRetryCount`, not
+  `revisionCount` (N6 keeps the two budgets separate, so a run of infra flakes
+  can no longer spend the content-revision allowance). `MissionState` records
+  the severity of the revision cycle in flight from the `REVISION_REQUESTED`
+  payload, and the E19 exits pick their counter from it; a log written before
+  the field reads as a content revision, which is what it charged. Tests
+  174 → 176.
+- Edge E30 no longer claims a fresh approval it never checked:
+  `READY_TO_PUBLISH` is only enterable through E26, which consumed the package
+  grant, so the local close needs nothing more (spec N10: "consumed package
+  grant ... →CLOSED (local close) only"). The flag described the entry, not the
+  exit, and nothing enforced it.
 
 ### Added
 
