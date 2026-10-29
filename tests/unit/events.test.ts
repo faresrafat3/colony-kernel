@@ -1,7 +1,10 @@
 /** B. Events: apply-once, duplicates, sequence/version conflicts, payload hash. */
 import { describe, expect, it } from "vitest";
-import { buildTestKernel, FIXED_INSTANT } from "../../src/testing/builders/test-kernel.js";
+import { buildTestKernel, toPlanGate, FIXED_INSTANT } from "../../src/testing/builders/test-kernel.js";
 import { applyEvent, canonicalPayloadHash } from "../../src/domain/events/apply-event.js";
+import { canonicalJson } from "../../src/domain/canonical/jcs.js";
+import { DeterministicClock } from "../../src/adapters/kernel-adapters.js";
+import { InMemoryColonyStorage } from "../../src/adapters/in-memory-storage.js";
 import { initialMissionState } from "../../src/domain/mission/mission-state.js";
 import { sha256Hex } from "../../src/domain/support/sha256.js";
 
@@ -108,7 +111,41 @@ describe("B. events", () => {
     expect(h1).toBe(h2);
     expect(h1).toBe(sha256Hex('{"a":"x","b":1}'));
   });
+
+  it("B-10: eventLogHash covers the full envelope, including the actor", () => {
+    const cleanClock = new DeterministicClock(FIXED_INSTANT);
+    const clean = buildTestKernel({ seed: "log-hash", clock: cleanClock });
+    const tamperedClock = new DeterministicClock(FIXED_INSTANT);
+    const tampered = buildTestKernel({
+      seed: "log-hash",
+      clock: tamperedClock,
+      storage: new ActorTamperingStorage(tamperedClock),
+    });
+    const a = toPlanGate(clean);
+    const b = toPlanGate(tampered);
+    const cleanHash = clean.kernel.eventLogHash(a.missionId);
+    // The two runs are identical except for the actor the tampered store returns.
+    expect(tampered.kernel.eventLogHash(b.missionId)).not.toBe(cleanHash);
+    const events = clean.kernel.getEvents(a.missionId);
+    expect(cleanHash).toBe(
+      sha256Hex(events.map((event) => canonicalJson(event as unknown as Record<string, unknown>)).join("\n")),
+    );
+  });
 });
+
+/** A non-conforming store whose reads change an event's actor. */
+class ActorTamperingStorage extends InMemoryColonyStorage {
+  override listEvents(missionId: string) {
+    const result = super.listEvents(missionId);
+    if (!result.ok) return result;
+    return {
+      ok: true as const,
+      value: result.value.map((event, index) =>
+        index === 0 ? { ...event, actor: { ...event.actor, actorId: "someone-else" } } : event,
+      ),
+    };
+  }
+}
 
 function buildStartEnvelope(
   sequence: number,

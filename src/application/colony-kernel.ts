@@ -5,6 +5,7 @@
  */
 import { KernelError, unwrap } from "../domain/errors/kernel-error.js";
 import { canonicalPayloadHash, applyEvent, reduceAll } from "../domain/events/apply-event.js";
+import { canonicalJson } from "../domain/canonical/jcs.js";
 import type { EventEnvelope, EventActor } from "../domain/events/envelope.js";
 import { EventType as ET } from "../domain/events/vocabulary.js";
 import { initialMissionState } from "../domain/mission/mission-state.js";
@@ -1019,9 +1020,9 @@ export class ColonyKernel {
 
   eventLogHash(missionId: string): string {
     const events = this.getEvents(missionId);
-    const canonical = events
-      .map((e) => `${e.missionSequence}|${e.eventType}|${e.eventId}|${e.payloadSha256}`)
-      .join("\n");
+    // Hash the whole canonical envelope: actor, role version, expected state
+    // version, causation and correlation are evidence, not decoration.
+    const canonical = events.map((event) => canonicalJson(event as unknown as Record<string, unknown>)).join("\n");
     return sha256Hex(canonical);
   }
 }

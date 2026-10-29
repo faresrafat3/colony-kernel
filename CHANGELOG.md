@@ -77,6 +77,11 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   `roleVersions` is read from the injected registry (not a hardcoded four-role
   map), and `invokeAgent` uses `MAX_ATTEMPTS_PER_INVOCATION` instead of a
   literal 3. Tests 172 → 173.
+- `eventLogHash` hashes the canonical envelope per event, not four fields:
+  actor, role version, expected state version, causation and correlation are
+  now covered, so a tampered actor changes the published log hash. The demo's
+  hash moves to `84dcec61…`; `docs/site/demo.json` is regenerated. Tests
+  173 → 174.
 
 ### Added
 
