@@ -61,6 +61,7 @@ export class InMemoryColonyStorage implements ColonyStorage {
     events: readonly EventEnvelope[],
     expectedStateVersion: number,
     reduce: (state: MissionState, event: EventEnvelope) => MissionState,
+    effects?: (committed: MissionState) => void,
   ): { ok: true; value: { state: MissionState; appended: number } } | { ok: false; error: KernelError } {
     const snapshot = this.snapshot();
     try {
@@ -115,6 +116,9 @@ export class InMemoryColonyStorage implements ColonyStorage {
         appended += 1;
       }
       this.states.set(missionId, state);
+      // Effects run inside the same snapshot window. A failed row write restores
+      // the events, the state CAS and every effect already written.
+      effects?.(state);
       return { ok: true, value: { state, appended } };
     } catch (e) {
       this.restore(snapshot); // partial migration rolls back fully (N5 req 8 analog)

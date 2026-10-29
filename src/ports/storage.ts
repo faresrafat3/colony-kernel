@@ -25,6 +25,16 @@ export interface ColonyStorage {
     events: readonly EventEnvelope[],
     expectedStateVersion: number,
     reduce: (state: MissionState, event: EventEnvelope) => MissionState,
+    /**
+     * Rows that must land with the events or not at all: a ledger row, an
+     * approval request, an approval consumption. Runs inside the transaction
+     * after every event reduced; a throw rolls the whole commit back.
+     *
+     * Audit facts do NOT belong here. An approval decision and a durable
+     * rejection must survive a refused transition (C-04, C-10, A04), and an
+     * orphan artifact is harmless (H-03), so those are written outside.
+     */
+    effects?: (committed: MissionState) => void,
   ): Result<{ state: MissionState; appended: number }>;
 
   appendEvent(envelope: EventEnvelope): Result<void>;

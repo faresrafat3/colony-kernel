@@ -149,10 +149,15 @@ export class ColonyKernel {
   /** Commit an event batch atomically; telemetry + durable rejection on failure. */
   private commit(
     missionId: string,
-    build: (state: MissionState) => { events: EventEnvelope[]; reduce?: typeof applyEvent },
+    build: (state: MissionState) => {
+      events: EventEnvelope[];
+      reduce?: typeof applyEvent;
+      /** Rows that must land with the events or not at all (see atomicApply). */
+      effects?: (committed: MissionState) => void;
+    },
   ): MissionState {
     const pre = this.current(missionId);
-    const { events, reduce } = build(pre);
+    const { events, reduce, effects } = build(pre);
     // Legality precedes storage uniqueness (A04): reject without any mutation,
     // durably, before unique-constraint errors can mask the semantic cause.
     try {
@@ -173,7 +178,7 @@ export class ColonyKernel {
       }
       throw e;
     }
-    const result = this.storage.atomicApply(missionId, events, pre.stateVersion, reduce ?? applyEvent);
+    const result = this.storage.atomicApply(missionId, events, pre.stateVersion, reduce ?? applyEvent, effects);
     if (!result.ok) {
       this.telemetry.record({ kind: "rejection", missionId, code: result.error.code, detail: result.error.toJSON() });
       unwrap(
@@ -357,9 +362,12 @@ export class ColonyKernel {
       throw new KernelError("ILLEGAL_TRANSITION", `approval requests originate from AWAITING_PLAN_APPROVAL, not ${state.stage}`, {});
     }
     const { request, envelope } = this.openApprovalRequest(state, input, "PLAN_APPROVAL", "IMPLEMENTATION");
-    const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);
+    const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent, () => {
+      // A gate event without its request row is a gate nobody can answer: the
+      // row is an effect of this commit, not a follow-up write.
+      unwrap(this.storage.createApprovalRequest(request));
+    });
     if (!committed.ok) throw committed.error;
-    unwrap(this.storage.createApprovalRequest(request));
     this.noteApprovalRequested(input.missionId, request);
     return request;
   }
@@ -411,6 +419,7 @@ export class ColonyKernel {
     // of the record is transactional with this commit inside atomicApply.
     // Legality precedes storage (A04), mirroring commit(): a guarded exit that
     // fails (e.g. exhausted counter) rejects durably with no state change.
+    let committedStage = state.stage;
     try {
       // N1 req 6: an approved record past its expiresAt must not authorize the
       // transition — expiry is judged at commit time against the injected clock.
@@ -435,7 +444,7 @@ export class ColonyKernel {
           });
         }
       }
-      applyEvent(state, envelope);
+      committedStage = applyEvent(state, envelope).stage;
     } catch (e) {
       if (e instanceof KernelError) {
         unwrap(
@@ -451,12 +460,14 @@ export class ColonyKernel {
       }
       throw e;
     }
-    const committed = this.storage.atomicApply(request.missionId, [envelope], state.stateVersion, (s, e) => {
-      const next = applyEvent(s, e);
+    // Consumption is an effect of the guarded exit: it lands with the
+    // APPROVAL_RECORDED event or not at all. The record itself was stored above
+    // and survives a refusal (C-04, C-10): an expired or refused approval stays
+    // auditable and unconsumed.
+    const committed = this.storage.atomicApply(request.missionId, [envelope], state.stateVersion, applyEvent, () => {
       if (record.decision === "APPROVED") {
-        unwrap(this.storage.consumeApproval(record.approvalRecordId, `${s.stage}->${next.stage}`, this.now()));
+        unwrap(this.storage.consumeApproval(record.approvalRecordId, `${state.stage}->${committedStage}`, this.now()));
       }
-      return next;
     });
     if (!committed.ok) throw committed.error;
     this.telemetry.record({ kind: "approval", missionId: request.missionId, code: record.decision, detail: { subjectHash: record.approvalSubjectHash } });
@@ -549,7 +560,6 @@ export class ColonyKernel {
   reserveBudget(missionId: string, resourceClass: ResourceClass, amount: number): BudgetLedger {
     const ledger = this.ledger(missionId, resourceClass);
     const next = unwrap(attemptLedger(() => reserve(ledger, amount)));
-    unwrap(this.storage.upsertLedger(missionId, resourceClass, ledger.ledgerVersion, next));
     this.commit(missionId, (s) => ({
       events: [
         this.envelope(ET.BUDGET_RESERVED, s, this.actorFor(null, "KERNEL_POLICY", "kernel"), { resourceClass, amount, reserved: next.reserved }, {
@@ -557,6 +567,11 @@ export class ColonyKernel {
           idempotencyKey: `budget:${missionId}:${resourceClass}:reserve:v${s.stateVersion}`,
         }),
       ],
+      // The row is an effect: it lands with BUDGET_RESERVED or not at all, so a
+      // refused transition cannot spend capacity the event log never records.
+      effects: () => {
+        unwrap(this.storage.upsertLedger(missionId, resourceClass, ledger.ledgerVersion, next));
+      },
     }));
     this.telemetry.record({ kind: "budget", missionId, code: "BUDGET_RESERVED", detail: { resourceClass, amount } });
     return next;
@@ -565,7 +580,6 @@ export class ColonyKernel {
   settleBudget(missionId: string, resourceClass: ResourceClass, amount: number): BudgetLedger {
     const ledger = this.ledger(missionId, resourceClass);
     const next = unwrap(attemptLedger(() => settle(ledger, "inv", amount)));
-    unwrap(this.storage.upsertLedger(missionId, resourceClass, ledger.ledgerVersion, next));
     this.commit(missionId, (s) => ({
       events: [
         this.envelope(ET.BUDGET_SETTLED, s, this.actorFor(null, "KERNEL_POLICY", "kernel"), { resourceClass, amount, spent: next.spent }, {
@@ -573,6 +587,9 @@ export class ColonyKernel {
           idempotencyKey: `budget:${missionId}:${resourceClass}:settle:v${s.stateVersion}`,
         }),
       ],
+      effects: () => {
+        unwrap(this.storage.upsertLedger(missionId, resourceClass, ledger.ledgerVersion, next));
+      },
     }));
     this.telemetry.record({ kind: "budget", missionId, code: "BUDGET_SETTLED", detail: { resourceClass, amount } });
     return next;
@@ -581,7 +598,6 @@ export class ColonyKernel {
   releaseBudget(missionId: string, resourceClass: ResourceClass, amount: number): BudgetLedger {
     const ledger = this.ledger(missionId, resourceClass);
     const next = unwrap(attemptLedger(() => release(ledger, amount)));
-    unwrap(this.storage.upsertLedger(missionId, resourceClass, ledger.ledgerVersion, next));
     this.commit(missionId, (s) => ({
       events: [
         this.envelope(ET.BUDGET_RELEASED, s, this.actorFor(null, "KERNEL_POLICY", "kernel"), { resourceClass, amount }, {
@@ -589,6 +605,9 @@ export class ColonyKernel {
           idempotencyKey: `budget:${missionId}:${resourceClass}:release:v${s.stateVersion}`,
         }),
       ],
+      effects: () => {
+        unwrap(this.storage.upsertLedger(missionId, resourceClass, ledger.ledgerVersion, next));
+      },
     }));
     return next;
   }
@@ -609,12 +628,6 @@ export class ColonyKernel {
     if (request === undefined || request.approvalPurpose !== "BUDGET_TOPUP" || request.missionId !== input.missionId) {
       throw new KernelError("INVALID_PURPOSE", "top-up approval purpose/mission mismatch", {});
     }
-    // N4 req 3: consume the approval BEFORE any ledger mutation. The consume is
-    // the at-most-once guard; it must run before upsertLedger, or a reused
-    // record would move the limit and only then be refused — the limit would
-    // have already changed. Refusing first, mutating second, is the order that
-    // makes "consumed at most once" actually hold.
-    unwrap(this.storage.consumeApproval(record.approvalRecordId, `topup:${input.resourceClass}`, this.now()));
     const ledger = this.ledger(input.missionId, input.resourceClass);
     const next = applyTopUp(ledger, {
       topUpId: this.ids.nextId("topup"),
@@ -623,7 +636,6 @@ export class ColonyKernel {
       approvalSubjectHash: record.approvalSubjectHash,
       appliedAt: this.now(),
     });
-    unwrap(this.storage.upsertLedger(input.missionId, input.resourceClass, ledger.ledgerVersion, next));
     this.commit(input.missionId, (s) => ({
       events: [
         this.envelope(ET.BUDGET_TOPUP_APPROVED, s, this.actorFor(null, "CAPTAIN_TRANSPORT", "captain-transport"), { resourceClass: input.resourceClass, amount: input.amount }, {
@@ -631,6 +643,14 @@ export class ColonyKernel {
           idempotencyKey: `budget:${input.missionId}:${input.resourceClass}:topup:v${s.stateVersion}`,
         }),
       ],
+      // N4 req 3: consume and move the limit inside the event's transaction.
+      // Consuming first keeps the at-most-once guard ahead of the ledger write;
+      // consuming inside the transaction means a refused transition consumes
+      // nothing, so the approval stays usable and the limit does not move.
+      effects: () => {
+        unwrap(this.storage.consumeApproval(record.approvalRecordId, `topup:${input.resourceClass}`, this.now()));
+        unwrap(this.storage.upsertLedger(input.missionId, input.resourceClass, ledger.ledgerVersion, next));
+      },
     }));
     return next;
   }
@@ -748,9 +768,11 @@ export class ColonyKernel {
       throw new KernelError("ILLEGAL_TRANSITION", `package approval originates from AWAITING_PUBLISH_APPROVAL, not ${state.stage}`, {});
     }
     const { request, envelope } = this.openApprovalRequest(state, input, "PACKAGE_APPROVAL", "READY_TO_PUBLISH");
-    const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);
+    const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent, () => {
+      // Same effect as the plan gate: the request row is part of the commit.
+      unwrap(this.storage.createApprovalRequest(request));
+    });
     if (!committed.ok) throw committed.error;
-    unwrap(this.storage.createApprovalRequest(request));
     this.noteApprovalRequested(input.missionId, request);
     return request;
   }

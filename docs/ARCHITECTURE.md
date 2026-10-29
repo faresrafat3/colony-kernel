@@ -43,9 +43,14 @@ colony-kernel/
 → build event(s) with injected clock + deterministic IDs + canonical payload hash
 → **pre-validate by pure `applyEvent` on the current state** (legality precedes
    storage uniqueness; failures become durable rejections with no mutation)
-→ `storage.atomicApply(missionId, events, expectedStateVersion, applyEvent)`
+→ `storage.atomicApply(missionId, events, expectedStateVersion, applyEvent, effects)`
    stages event-append + state CAS + unique constraints in one transaction and
-   rolls back fully on any failure
+   rolls back fully on any failure. `effects` is where the rows that must land
+   with the events go (budget ledger row, approval request row, approval
+   consumption): a refused transition must spend no capacity, open no gate and
+   consume no approval. Rows that must survive a refusal stay outside the
+   transaction — approval decisions and rejections are audit facts (C-04, C-10,
+   A04), and an orphan artifact is harmless (H-03).
 → telemetry record → return new state / receipt.
 
 ## Event and state invariants
