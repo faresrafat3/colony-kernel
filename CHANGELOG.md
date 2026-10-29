@@ -73,6 +73,10 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   instead of collapsing them to `{}`. Two different payloads could share one
   canonical form, and therefore one `payloadSha256` / `approvalSubjectHash`, by
   passing a value JSON cannot represent. Tests 169 → 172.
+- Two copied facts now come from their homes: an approval request's
+  `roleVersions` is read from the injected registry (not a hardcoded four-role
+  map), and `invokeAgent` uses `MAX_ATTEMPTS_PER_INVOCATION` instead of a
+  literal 3. Tests 172 → 173.
 
 ### Added
 

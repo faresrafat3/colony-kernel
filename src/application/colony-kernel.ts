@@ -8,6 +8,7 @@ import { canonicalPayloadHash, applyEvent, reduceAll } from "../domain/events/ap
 import type { EventEnvelope, EventActor } from "../domain/events/envelope.js";
 import { EventType as ET } from "../domain/events/vocabulary.js";
 import { initialMissionState } from "../domain/mission/mission-state.js";
+import { MAX_ATTEMPTS_PER_INVOCATION } from "../domain/mission/stages.js";
 import type { MissionState } from "../domain/mission/mission-state.js";
 import type { ColonyStorage } from "../ports/storage.js";
 import type { Clock, IdGenerator, TelemetrySink } from "../ports/kernel-ports.js";
@@ -309,6 +310,11 @@ export class ColonyKernel {
    * purpose and the guarded exit differ; every other field is N1-invariant.
    * `approvalSubjectHash` covers all of it, so callers must not mutate the result.
    */
+  /** One home for the role versions an approval binds: the injected registry. */
+  private approvalRoleVersions(): Record<string, number> {
+    return Object.fromEntries(this.roles.roleIds().map((roleId) => [roleId, this.roles.role(roleId).roleVersion]));
+  }
+
   private openApprovalRequest(
     state: MissionState,
     input: { artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number },
@@ -329,7 +335,7 @@ export class ColonyKernel {
       requiredHumanAuthority: HUMAN_AUTHORITY,
       artifactSubjects: sortArtifactSubjects(input.artifactSubjects),
       policyVersion: "v0.1.1",
-      roleVersions: { "first-mate": 1, craftsman: 1, verifier: 1, reviewer: 1 },
+      roleVersions: this.approvalRoleVersions(),
       issuedAt: this.now(),
       expiresAt: new Date(this.clock.now().getTime() + input.ttlMs).toISOString(),
       nonce: this.ids.nextNonce(),
@@ -982,7 +988,7 @@ export class ColonyKernel {
     const invocation: AgentInvocation = {
       ...request,
       attempt: request.attempt ?? 1,
-      maximumAttempts: 3,
+      maximumAttempts: MAX_ATTEMPTS_PER_INVOCATION,
     };
     this.roles.assertCapability(invocation.roleId, invocation.capabilityId as CapabilityId);
     const result = this.runtime.invoke(invocation);

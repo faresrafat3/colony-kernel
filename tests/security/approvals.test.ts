@@ -4,6 +4,7 @@ import { buildTestKernel, toPlanGate, toPackageGate, driveToPublishGate, FIXED_I
 import { SteppingClock } from "../../src/adapters/kernel-adapters.js";
 void SteppingClock;
 import { approvalSubjectHash, sortArtifactSubjects } from "../../src/domain/approvals/approval.js";
+import { RoleRegistry, testRoleRegistry, type RoleManifest } from "../../src/domain/capabilities/registry.js";
 
 describe("C. approvals", () => {
   function gateRequest(k: TestKernel, missionId: string, planArtifactId: string, planSha: string, ttlMs = 60_000) {
@@ -256,6 +257,20 @@ it("C-17: a rejection without a change request closes the mission (E12)", () => 
       decidedBy: "captain",
     });
     expect(k.kernel.getMission(missionId)?.stage).toBe("CLOSED");
+  });
+
+  it("C-19: approval role versions come from the injected registry", () => {
+    const base = testRoleRegistry();
+    const manifests: RoleManifest[] = base.roleIds().map((id) => {
+      const role = base.role(id);
+      return { ...role, roleVersion: id === "reviewer" ? 2 : role.roleVersion };
+    });
+    const roles = new RoleRegistry(manifests);
+    const k = buildTestKernel({ roles });
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const request = gateRequest(k, missionId, planArtifactId, planSha);
+    expect(request.roleVersions.reviewer).toBe(2);
+    expect(request.roleVersions["first-mate"]).toBe(1);
   });
 });
 
