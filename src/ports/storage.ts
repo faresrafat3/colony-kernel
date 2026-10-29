@@ -78,6 +78,8 @@ export interface ColonyStorage {
 
   /** Single-writer enforcement (N7 leases). */
   acquireLease(name: string, ttl: { expiresAt: string }): Result<void>;
+  /** Extend a live lease; an absent or expired lease is not renewable (N7). */
+  renewLease(name: string, ttl: { expiresAt: string }): Result<void>;
   releaseLease(name: string): Result<void>;
 
   /** Durable rejection audit (A04): rejections are recorded, never deleted. */

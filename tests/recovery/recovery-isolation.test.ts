@@ -137,5 +137,26 @@ describe("I. isolation model", () => {
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.error.code).toBe("INVALID_SCHEMA");
   });
+
+  it("I-06: a live lease can be extended; an absent or expired one cannot", () => {
+    let now = FIXED_INSTANT.getTime();
+    const k = buildTestKernel({ clock: { now: () => new Date(now) } });
+    const ttl = (at: number) => ({ expiresAt: new Date(at).toISOString() });
+    expect(k.kernel.storage.renewLease("writer", ttl(now + 60_000)).ok).toBe(false);
+    expect(k.kernel.storage.acquireLease("writer", ttl(now + 30_000)).ok).toBe(true);
+    // extend before the original expiry
+    expect(k.kernel.storage.renewLease("writer", ttl(now + 120_000)).ok).toBe(true);
+    now += 60_000; // past the original ttl, before the renewal
+    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(false);
+    now += 61_000; // past the renewal: the name is free again
+    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
+    now += 61_000; // the acquired lease has also expired
+    const expired = k.kernel.storage.renewLease("writer", ttl(now + 60_000));
+    expect(expired.ok).toBe(false);
+    if (!expired.ok) expect(expired.error.code).toBe("LEASE_NOT_HELD");
+    const bad = k.kernel.storage.renewLease("writer", { expiresAt: "not-a-date" });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.error.code).toBe("INVALID_SCHEMA");
+  });
 });
 

@@ -286,6 +286,21 @@ export class InMemoryColonyStorage implements ColonyStorage {
     return { ok: true, value: undefined };
   }
 
+  renewLease(name: string, ttl: { expiresAt: string }): { ok: true; value: void } | { ok: false; error: KernelError } {
+    const expiry = Date.parse(ttl.expiresAt);
+    if (!Number.isFinite(expiry)) {
+      return { ok: false, error: new KernelError("INVALID_SCHEMA", "lease expiresAt must be an ISO timestamp", { expiresAt: ttl.expiresAt }) };
+    }
+    const existing = this.leases.get(name);
+    // Only a live lease can be extended; reviving an expired one would steal a
+    // lock another writer may already hold (N7 single-writer).
+    if (existing === undefined || !(Date.parse(existing.expiresAt) > this.clock.now().getTime())) {
+      return { ok: false, error: new KernelError("LEASE_NOT_HELD", `lease ${name} is not held`, {}) };
+    }
+    this.leases.set(name, { ...ttl });
+    return { ok: true, value: undefined };
+  }
+
   releaseLease(name: string): { ok: true; value: void } {
     this.leases.delete(name);
     return { ok: true, value: undefined };

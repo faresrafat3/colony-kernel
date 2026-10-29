@@ -24,6 +24,9 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   and an unparseable `expiresAt` is refused at acquisition. The in-memory
   adapter takes the injected clock (N6/N7), so lease time is never ambient.
   Tests 157 → 158.
+- Storage leases can be renewed: `renewLease(name, ttl)` extends a live lease
+  and refuses an absent or expired one with `LEASE_NOT_HELD`, so a long writer
+  no longer has to release and re-acquire. Tests 158 → 159.
 
 ### Added
 
