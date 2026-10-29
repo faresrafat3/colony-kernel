@@ -688,6 +688,8 @@ export class ColonyKernel {
   // ── budget ledger (N4) ─────────────────────────────────────────────────
 
   setBudgetLimit(missionId: string, resourceClass: ResourceClass, immutableLimit: number): void {
+    // A ledger row belongs to a mission the event log created; no orphans.
+    this.current(missionId);
     unwrap(this.storage.upsertLedger(missionId, resourceClass, 0, freshLedger(missionId, resourceClass, immutableLimit)));
   }
 

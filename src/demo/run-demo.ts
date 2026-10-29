@@ -197,15 +197,20 @@ export function runDemo(seed: string): DemoOutput {
   if (final === undefined) throw new Error("demo mission state missing");
   const transitions: DemoOutput["acceptedTransitions"] = [];
   {
-    // Replay stages deterministically with the domain reducer (single truth).
-    const seed = initialMissionState({ missionId, title: final.title, createdAt: events[0]?.occurredAt ?? "" });
-    let stage = seed.stage;
-    let version = 0;
-    for (const e of events) {
-      const next = applyEvent({ ...seed, stage, stateVersion: version, missionSequence: e.missionSequence - 1 }, e);
-      transitions.push({ seq: e.missionSequence, event: e.eventType, from: stage, to: next.stage, stateVersion: e.expectedStateVersion + 1 });
-      stage = next.stage;
-      version = next.stateVersion;
+    // Replay stages deterministically with the domain reducer (single truth):
+    // carry ONE state through the stream. Re-seeding per step would reset the
+    // counters and bindings and print transitions the kernel would refuse.
+    let state = initialMissionState({ missionId, title: final.title, createdAt: events[0]?.occurredAt ?? "" });
+    for (const event of events) {
+      const next = applyEvent(state, event);
+      transitions.push({
+        seq: event.missionSequence,
+        event: event.eventType,
+        from: state.stage,
+        to: next.stage,
+        stateVersion: next.stateVersion,
+      });
+      state = next;
     }
   }
   const artifactsOut = artifacts.value.map((a) => ({ artifactId: a.artifactId, artifactType: a.artifactType, contentSha256: a.contentSha256 }));

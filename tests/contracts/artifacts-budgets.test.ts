@@ -206,6 +206,12 @@ describe("E. budgets", () => {
     expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(100);
   });
 
+  it("E-13: setBudgetLimit refuses a mission the log never created", () => {
+    const k = buildTestKernel();
+    expect(() => k.kernel.setBudgetLimit("no-such-mission", "monetary_cost", 100)).toThrow(/INVALID_EVENT/);
+    expect(k.storage.getLedger("no-such-mission", "monetary_cost").value).toBeUndefined();
+  });
+
   it("E-07: hard exhaustion blocks further execution", () => {
     const k = buildTestKernel();
     const { missionId } = toImplementation(k);

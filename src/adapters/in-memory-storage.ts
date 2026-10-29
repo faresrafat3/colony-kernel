@@ -370,6 +370,8 @@ export class InMemoryColonyStorage implements ColonyStorage {
     return { ok: true, value: [...this.rejections] };
   }
 
+  // shortcut: a whole-store JSON snapshot per command (O(total state)); fine at
+  // M1A's demo scale, replace with row-level undo in the M1B adapter.
   private snapshot(): string {
     return JSON.stringify({
       states: [...this.states.entries()],

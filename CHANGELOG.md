@@ -94,6 +94,12 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   grant, so the local close needs nothing more (spec N10: "consumed package
   grant ... →CLOSED (local close) only"). The flag described the entry, not the
   exit, and nothing enforced it.
+- Remaining audit cleanup: `setBudgetLimit` refuses a mission the log never
+  created (it could leave an orphan ledger); the demo computes its transition
+  list by carrying one state through `applyEvent` instead of re-seeding it per
+  step; the unused artifact-builder helpers are deleted, and the in-memory
+  snapshot carries a `shortcut:` note naming its O(total state) limit. Tests
+  176 → 177.
 
 ### Added
 

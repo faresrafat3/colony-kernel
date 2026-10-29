@@ -34,31 +34,3 @@ export interface ArtifactContent {
 export function canonicalArtifactContent(content: ArtifactContent): string {
   return canonicalJson(content.fields);
 }
-
-export function artifactContentBytes(content: ArtifactContent): Uint8Array {
-  return new TextEncoder().encode(canonicalArtifactContent(content));
-}
-
-export function buildArtifactManifest(input: {
-  artifactId: string;
-  missionId: string;
-  artifactType: ArtifactType;
-  content: ArtifactContent;
-  createdByRoleId: string;
-  createdByRoleVersion: number;
-  finalizedAt: string;
-  contentSha256: string;
-}): ArtifactManifest {
-  const bytes = artifactContentBytes(input.content);
-  return {
-    schemaVersion: 1,
-    artifactId: input.artifactId,
-    missionId: input.missionId,
-    artifactType: input.artifactType,
-    contentSha256: input.contentSha256,
-    createdByRoleId: input.createdByRoleId,
-    createdByRoleVersion: input.createdByRoleVersion,
-    finalizedAt: input.finalizedAt,
-    contentBytes: bytes.length,
-  };
-}
