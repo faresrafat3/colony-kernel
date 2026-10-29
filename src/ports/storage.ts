@@ -42,10 +42,12 @@ export interface ColonyStorage {
   listEvents(missionId: string): Result<readonly EventEnvelope[]>;
 
   getMissionState(missionId: string): Result<MissionState | undefined>;
+  /** Event append + mission-state CAS in one transaction (N7). */
   compareAndSwapMissionState(
     missionId: string,
     expectedVersion: number,
     nextState: MissionState,
+    events: readonly EventEnvelope[],
   ): Result<void>;
 
   reserveMissionSequence(missionId: string): Result<number>;

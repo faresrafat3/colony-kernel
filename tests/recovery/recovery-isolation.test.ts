@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { buildTestKernel, toImplementation, toPlanGate, FIXED_INSTANT } from "../../src/testing/builders/test-kernel.js";
 import { initialMissionState } from "../../src/domain/mission/mission-state.js";
-import { reduceAll } from "../../src/domain/events/apply-event.js";
+import { reduceAll, applyEvent, canonicalPayloadHash } from "../../src/domain/events/apply-event.js";
 
 describe("H. recovery", () => {
   it("H-01: event replay reconstructs identical state (A24 core)", () => {
@@ -173,6 +173,44 @@ describe("I. isolation model", () => {
     const unknownB = k.kernel.storage.reserveMissionSequence("no-such-mission");
     expect(unknownA.ok && unknownA.value).toBe(1);
     expect(unknownB.ok && unknownB.value).toBe(2);
+  });
+
+  it("I-08: CAS appends its events atomically and refuses a mismatched batch", () => {
+    const k = buildTestKernel();
+    const { missionId } = k.kernel.createMission({ title: "t" });
+    const before = k.kernel.getMission(missionId);
+    if (before === undefined) throw new Error("missing state");
+    const payload = {};
+    const event = {
+      schemaVersion: 1 as const,
+      eventId: k.kernel.ids.nextUuid(),
+      eventType: "POLICY_SCREEN_STARTED" as const,
+      missionId,
+      missionSequence: before.missionSequence + 1,
+      expectedStateVersion: before.stateVersion,
+      actor: { actorType: "ADMITTED_INVOCATION" as const, actorId: "first-mate", roleId: "first-mate", roleVersion: 1 },
+      causationId: null,
+      correlationId: "cas-test",
+      idempotencyKey: "cas:test",
+      occurredAt: FIXED_INSTANT.toISOString(),
+      recordedAt: FIXED_INSTANT.toISOString(),
+      payload,
+      payloadSha256: canonicalPayloadHash(payload),
+    };
+    const next = applyEvent(before, event);
+    expect(k.kernel.storage.compareAndSwapMissionState(missionId, before.stateVersion, next, [event]).ok).toBe(true);
+    expect(k.kernel.getMission(missionId)?.stateVersion).toBe(next.stateVersion);
+    expect(k.kernel.getEvents(missionId)).toHaveLength(2);
+    // A stale expected version writes nothing.
+    const stale = k.kernel.storage.compareAndSwapMissionState(missionId, before.stateVersion, next, []);
+    expect(stale.ok).toBe(false);
+    if (!stale.ok) expect(stale.error.code).toBe("CONCURRENCY_CONFLICT");
+    // A state/event batch that disagrees writes nothing.
+    const mismatch = k.kernel.storage.compareAndSwapMissionState(missionId, next.stateVersion, next, [event]);
+    expect(mismatch.ok).toBe(false);
+    if (!mismatch.ok) expect(mismatch.error.code).toBe("INTERNAL_INVARIANT_VIOLATION");
+    expect(k.kernel.getEvents(missionId)).toHaveLength(2);
+    expect(k.kernel.getMission(missionId)?.stateVersion).toBe(next.stateVersion);
   });
 });
 

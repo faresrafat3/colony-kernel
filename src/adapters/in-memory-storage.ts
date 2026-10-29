@@ -132,23 +132,32 @@ export class InMemoryColonyStorage implements ColonyStorage {
     }
   }
 
+  private appendConflict(event: EventEnvelope): KernelError | null {
+    if (this.events.has(event.eventId)) {
+      return new KernelError("IDEMPOTENCY_CONFLICT", "eventId already exists", {});
+    }
+    if (this.sequences.has(`${event.missionId}|${event.missionSequence}`)) {
+      return new KernelError("SEQUENCE_CONFLICT", "missionSequence already used", {});
+    }
+    if (event.idempotencyKey !== "" && this.idempotency.has(event.idempotencyKey)) {
+      return new KernelError("IDEMPOTENCY_CONFLICT", "idempotencyKey already used", {});
+    }
+    return null;
+  }
+
+  private recordEvent(event: EventEnvelope): void {
+    this.events.set(event.eventId, event);
+    this.sequences.set(`${event.missionId}|${event.missionSequence}`, event.eventId);
+    if (event.idempotencyKey !== "") this.idempotency.set(event.idempotencyKey, event.eventId);
+    const list = this.eventsByMission.get(event.missionId) ?? [];
+    list.push(event);
+    this.eventsByMission.set(event.missionId, list);
+  }
+
   appendEvent(envelope: EventEnvelope): { ok: true; value: void } | { ok: false; error: KernelError } {
-    if (this.events.has(envelope.eventId)) {
-      return { ok: false, error: new KernelError("IDEMPOTENCY_CONFLICT", "eventId already exists", {}) };
-    }
-    const seqKey = `${envelope.missionId}|${envelope.missionSequence}`;
-    if (this.sequences.has(seqKey)) {
-      return { ok: false, error: new KernelError("SEQUENCE_CONFLICT", "missionSequence already used", {}) };
-    }
-    if (envelope.idempotencyKey !== "" && this.idempotency.has(envelope.idempotencyKey)) {
-      return { ok: false, error: new KernelError("IDEMPOTENCY_CONFLICT", "idempotencyKey already used", {}) };
-    }
-    this.events.set(envelope.eventId, envelope);
-    this.sequences.set(seqKey, envelope.eventId);
-    if (envelope.idempotencyKey !== "") this.idempotency.set(envelope.idempotencyKey, envelope.eventId);
-    const list = this.eventsByMission.get(envelope.missionId) ?? [];
-    list.push(envelope);
-    this.eventsByMission.set(envelope.missionId, list);
+    const conflict = this.appendConflict(envelope);
+    if (conflict !== null) return { ok: false, error: conflict };
+    this.recordEvent(envelope);
     return { ok: true, value: undefined };
   }
 
@@ -168,6 +177,7 @@ export class InMemoryColonyStorage implements ColonyStorage {
     missionId: string,
     expectedVersion: number,
     nextState: MissionState,
+    events: readonly EventEnvelope[],
   ): { ok: true; value: void } | { ok: false; error: KernelError } {
     const current = this.states.get(missionId);
     if (current === undefined) {
@@ -176,6 +186,29 @@ export class InMemoryColonyStorage implements ColonyStorage {
     if (current.stateVersion !== expectedVersion) {
       return { ok: false, error: new KernelError("CONCURRENCY_CONFLICT", "CAS mismatch", {}) };
     }
+    // The next state and its event batch must describe the same commit; a swap
+    // that disagrees with its events would make replay diverge from the CAS (N7).
+    if (
+      nextState.missionId !== missionId ||
+      nextState.stateVersion !== expectedVersion + events.length ||
+      nextState.missionSequence !== current.missionSequence + events.length
+    ) {
+      return { ok: false, error: new KernelError("INTERNAL_INVARIANT_VIOLATION", "CAS state does not match its event batch", {}) };
+    }
+    // Validate the whole batch before writing anything: a refused CAS writes nothing.
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i] as EventEnvelope;
+      if (
+        event.missionId !== missionId ||
+        event.missionSequence !== current.missionSequence + i + 1 ||
+        event.expectedStateVersion !== expectedVersion + i
+      ) {
+        return { ok: false, error: new KernelError("INTERNAL_INVARIANT_VIOLATION", `event ${i} does not continue mission ${missionId}`, {}) };
+      }
+      const conflict = this.appendConflict(event);
+      if (conflict !== null) return { ok: false, error: conflict };
+    }
+    for (const event of events) this.recordEvent(event);
     this.states.set(missionId, nextState);
     return { ok: true, value: undefined };
   }

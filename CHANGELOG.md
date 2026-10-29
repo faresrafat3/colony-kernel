@@ -31,6 +31,10 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   instead of repeating the state's next sequence; the allocator sits outside
   the `atomicApply` snapshot, so a failed transaction cannot reissue a number.
   Tests 159 → 160.
+- `compareAndSwapMissionState` now takes the events it commits (N7): the state
+  swap and the event append are one operation, a batch that disagrees with the
+  next state is refused with no writes, and the append constraints live in one
+  helper shared with `appendEvent`. Tests 160 → 161.
 
 ### Added
 
