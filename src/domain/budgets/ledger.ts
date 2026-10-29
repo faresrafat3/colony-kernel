@@ -138,7 +138,15 @@ export function release(ledger: BudgetLedger, amount: number): BudgetLedger {
 
 /** Top-up application; class restriction is enforced by the caller (N4 req 3). */
 export function applyTopUp(ledger: BudgetLedger, topUp: BudgetTopUp): BudgetLedger {
-  return withVersion({ ...ledger, approvedTopUps: [...ledger.approvedTopUps, topUp] });
+  // A top-up is a limit change: the same positive-integer rule as reserve/settle.
+  if (!Number.isInteger(topUp.amount) || topUp.amount <= 0) {
+    throw new KernelError("INVALID_SCHEMA", "top-up amount must be a positive integer", {
+      amount: topUp.amount,
+    });
+  }
+  const next = withVersion({ ...ledger, approvedTopUps: [...ledger.approvedTopUps, topUp] });
+  assertLedgerInvariants(next);
+  return next;
 }
 
 /** Any attempt to mutate immutableLimit is an integrity failure (N4 req 2). */

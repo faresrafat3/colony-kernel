@@ -89,16 +89,17 @@ describe("I. isolation model", () => {
     const k = buildTestKernel();
     const first = toImplementation(k);
     const second = toPlanGate(k);
-    const stolen = k.kernel.requestPlanApproval({
-      missionId: second.missionId,
-      artifactSubjects: [{ artifactId: first.candidateArtifactId, artifactType: "implementation_candidate", artifactSchemaVersion: 1, contentSha256: first.candidateSha, finalizedAt: FIXED_INSTANT.toISOString() }],
-      requestedByRole: { roleId: "first-mate", roleVersion: 1 },
-      ttlMs: 60_000,
-    });
-    // The subject hash includes the missionId: replay across missions is a
-    // different subject, and the candidate artifact belongs to another mission.
-    expect(stolen.missionId).toBe(second.missionId);
-    expect(stolen.approvalPurpose).toBe("PLAN_APPROVAL");
+    // The candidate belongs to mission A; mission B's plan gate must refuse it
+    // at request time, not accept it and rely on the hash alone.
+    expect(() =>
+      k.kernel.requestPlanApproval({
+        missionId: second.missionId,
+        artifactSubjects: [{ artifactId: first.candidateArtifactId, artifactType: "implementation_candidate", artifactSchemaVersion: 1, contentSha256: first.candidateSha, finalizedAt: FIXED_INSTANT.toISOString() }],
+        requestedByRole: { roleId: "first-mate", roleVersion: 1 },
+        ttlMs: 60_000,
+      }),
+    ).toThrow(/INVALID_SCHEMA/);
+    expect(k.kernel.getMission(second.missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
   });
 
   it("I-03: artifacts are namespaced per mission; no cross-mission artifact leaks", () => {

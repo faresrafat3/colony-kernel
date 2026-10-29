@@ -5,6 +5,7 @@ import type { SteppingClock } from "../../adapters/kernel-adapters.js";
 import { DeterministicClock, DeterministicIdGenerator, InMemoryTelemetry } from "../../adapters/kernel-adapters.js";
 import { FakeAgentRuntime, type ScriptedResponse } from "../../adapters/fake-agent-runtime.js";
 import type { ApprovalRequest } from "../../domain/approvals/approval.js";
+import type { RoleRegistry } from "../../domain/capabilities/registry.js";
 
 export const FIXED_INSTANT = new Date(Date.UTC(2026, 8, 17, 12, 0, 0));
 export const TEST_SEED = "colony-kernel-test-seed";
@@ -16,7 +17,7 @@ export interface TestKernel {
   runtime: FakeAgentRuntime;
 }
 
-export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: string; clock?: SteppingClock }): TestKernel {
+export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: string; clock?: SteppingClock; roles?: RoleRegistry }): TestKernel {
   const storage = new InMemoryColonyStorage();
   const telemetry = new InMemoryTelemetry();
   const runtime = new FakeAgentRuntime(options?.script ?? []);
@@ -26,6 +27,7 @@ export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: 
     ids: new DeterministicIdGenerator(options?.seed ?? TEST_SEED),
     telemetry,
     runtime,
+    ...(options?.roles === undefined ? {} : { roles: options.roles }),
   });
   return { kernel, storage, telemetry, runtime };
 }
@@ -70,14 +72,9 @@ export function toImplementation(k: TestKernel): { missionId: string; planArtifa
   return { missionId, planArtifactId, planSha, candidateArtifactId: candidate.manifest.artifactId, candidateSha: candidate.contentSha256 };
 }
 
-/**
- * Drive a mission to AWAITING_PUBLISH_APPROVAL and issue the package request.
- * Binds to a real subject set, so the gate's request is bound to what the
- * mission actually produced (no hand-built subjects).
- */
-export function toPackageGate(k: TestKernel): { missionId: string; request: ApprovalRequest } {
+/** Advance an existing IMPLEMENTATION mission to AWAITING_PUBLISH_APPROVAL. */
+export function driveToPublishGate(k: TestKernel, missionId: string): void {
   const { kernel } = k;
-  const { missionId } = toImplementation(k);
   kernel.finalizeArtifact({
     missionId,
     roleId: "verifier",
@@ -102,6 +99,26 @@ export function toPackageGate(k: TestKernel): { missionId: string; request: Appr
   });
   kernel.completeDocumentation(missionId);
   kernel.completeFinalPolicyGate(missionId, "allowed");
+}
+
+/**
+ * Drive a mission to AWAITING_PUBLISH_APPROVAL (no gate request yet).
+ * Split from toPackageGate so a test can issue its own requests at that gate.
+ */
+export function toPublishGate(k: TestKernel): { missionId: string } {
+  const { missionId } = toImplementation(k);
+  driveToPublishGate(k, missionId);
+  return { missionId };
+}
+
+/**
+ * Drive a mission to AWAITING_PUBLISH_APPROVAL and issue the package request.
+ * Binds to a real subject set, so the gate's request is bound to what the
+ * mission actually produced (no hand-built subjects).
+ */
+export function toPackageGate(k: TestKernel): { missionId: string; request: ApprovalRequest } {
+  const { kernel } = k;
+  const { missionId } = toPublishGate(k);
   // Read through the port, not the concrete adapter: only the port declares the
   // failure branch, and a test kit must exercise the shape callers really see.
   const artifacts = k.kernel.storage.listArtifacts(missionId);

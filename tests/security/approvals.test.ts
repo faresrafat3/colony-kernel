@@ -1,6 +1,6 @@
 /** C. Approvals: exact binding, staleness, expiry, replay, purpose, self-approval. */
 import { describe, expect, it } from "vitest";
-import { buildTestKernel, toPlanGate, FIXED_INSTANT, type TestKernel } from "../../src/testing/builders/test-kernel.js";
+import { buildTestKernel, toPlanGate, driveToPublishGate, FIXED_INSTANT, type TestKernel } from "../../src/testing/builders/test-kernel.js";
 import { SteppingClock } from "../../src/adapters/kernel-adapters.js";
 void SteppingClock;
 import { approvalSubjectHash, sortArtifactSubjects } from "../../src/domain/approvals/approval.js";
@@ -139,6 +139,64 @@ describe("C. approvals", () => {
     expect(record?.decision).toBe("APPROVED");
     expect(k.storage.isApprovalConsumed(record?.approvalRecordId ?? "")).toBe(false);
     expect(k.storage.listRejections().value?.at(-1)?.code).toBe("EXPIRED_AT_COMMIT");
+  });
+  it("C-11: an expired approval stays refused on replay", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const request = gateRequest(k, missionId, planArtifactId, planSha, -1);
+    const approve = () =>
+      k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    expect(approve).toThrow(/EXPIRED_AT_COMMIT/);
+    // The second call replays the stored record; it must still refuse.
+    expect(approve).toThrow(/EXPIRED_AT_COMMIT/);
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+    const record = k.storage.getApprovalRecordByRequest(request.approvalRequestId).value;
+    expect(k.storage.isApprovalConsumed(record?.approvalRecordId ?? "")).toBe(false);
+  });
+
+  it("C-12: a request from the plan gate cannot authorize the publish gate", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const stale = gateRequest(k, missionId, planArtifactId, planSha);
+    const live = gateRequest(k, missionId, planArtifactId, planSha);
+    k.kernel.recordApprovalDecision({ approvalRequestId: live.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    expect(k.kernel.getMission(missionId)?.stage).toBe("IMPLEMENTATION");
+    driveToPublishGate(k, missionId);
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PUBLISH_APPROVAL");
+    expect(() =>
+      k.kernel.recordApprovalDecision({ approvalRequestId: stale.approvalRequestId, decision: "APPROVED", decidedBy: "captain" }),
+    ).toThrow(/INVALID_PURPOSE|STALE_APPROVAL/);
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PUBLISH_APPROVAL");
+  });
+
+  it("C-13: a reissued gate request makes the earlier one stale", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const first = gateRequest(k, missionId, planArtifactId, planSha);
+    const second = gateRequest(k, missionId, planArtifactId, planSha);
+    expect(() =>
+      k.kernel.recordApprovalDecision({ approvalRequestId: first.approvalRequestId, decision: "APPROVED", decidedBy: "captain" }),
+    ).toThrow(/STALE_APPROVAL/);
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+    k.kernel.recordApprovalDecision({ approvalRequestId: second.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    expect(k.kernel.getMission(missionId)?.stage).toBe("IMPLEMENTATION");
+  });
+
+  it("C-14: a gate request must name the artifacts it authorizes", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId } = toPlanGate(k);
+    expect(() =>
+      k.kernel.requestPlanApproval({ missionId, artifactSubjects: [], requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 }),
+    ).toThrow(/INVALID_SCHEMA/);
+    expect(() =>
+      k.kernel.requestPlanApproval({
+        missionId,
+        artifactSubjects: [{ artifactId: planArtifactId, artifactType: "plan", artifactSchemaVersion: 1, contentSha256: "not-the-plan", finalizedAt: FIXED_INSTANT.toISOString() }],
+        requestedByRole: { roleId: "first-mate", roleVersion: 1 },
+        ttlMs: 60_000,
+      }),
+    ).toThrow(/STALE_APPROVAL/);
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
   });
 });
 

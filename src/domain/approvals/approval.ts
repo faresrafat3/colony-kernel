@@ -82,9 +82,10 @@ export function approvalSubjectHash(request: ApprovalRequest): string {
  * identity would then pass as a human authority. The function is not a
  * defect; the contract is a sharp edge and the caller owns it.
  *
- * The application layer satisfies the precondition structurally: it passes
- * `AGENT_ROLE_IDS`, which is derived from the role registry's own manifests
- * and can never be empty (`RoleRegistry` refuses to be built without roles).
+ * The application layer satisfies the precondition structurally: it passes the
+ * injected registry's `roleIds()`, which can never be empty (`RoleRegistry`
+ * refuses to be built without roles) and always names the roles the kernel
+ * actually knows.
  */
 export function isHumanAuthority(decidedBy: string, agentRoleIds: readonly string[]): boolean {
   return !agentRoleIds.includes(decidedBy);

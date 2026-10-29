@@ -13,7 +13,7 @@ import type { ColonyStorage } from "../ports/storage.js";
 import type { Clock, IdGenerator, TelemetrySink } from "../ports/kernel-ports.js";
 import type { AgentRuntime, AgentInvocation, AgentInvocationRecord } from "../ports/agent-runtime.js";
 import type { RoleRegistry } from "../domain/capabilities/registry.js";
-import { testRoleRegistry, AGENT_ROLE_IDS } from "../domain/capabilities/registry.js";
+import { testRoleRegistry, CAPABILITY_MANIFESTS } from "../domain/capabilities/registry.js";
 import type { CapabilityId } from "../domain/capabilities/registry.js";
 import type { ArtifactContent, ArtifactType, ArtifactManifest } from "../domain/artifacts/artifact.js";
 import { canonicalArtifactContent } from "../domain/artifacts/artifact.js";
@@ -356,11 +356,83 @@ export class ColonyKernel {
     };
   }
 
+  /**
+   * N1 reqs 6-7 / A07: a request authorizes only the gate it was issued for.
+   * The request's own APPROVAL_REQUESTED commit is the +1; any later event
+   * makes it stale. Purpose must match the gate (PLAN vs PACKAGE).
+   */
+  private assertApprovalBindsGate(request: ApprovalRequest, state: MissionState): void {
+    const expected =
+      state.stage === "AWAITING_PLAN_APPROVAL"
+        ? "PLAN_APPROVAL"
+        : state.stage === "AWAITING_PUBLISH_APPROVAL"
+          ? "PACKAGE_APPROVAL"
+          : null;
+    if (expected === null || request.approvalPurpose !== expected) {
+      throw new KernelError("INVALID_PURPOSE", `approval purpose ${request.approvalPurpose} does not match gate ${state.stage}`, {
+        approvalPurpose: request.approvalPurpose,
+        gate: state.stage,
+      });
+    }
+    if (request.requestedTransition.fromState !== state.stage) {
+      throw new KernelError("STALE_APPROVAL", `approval issued from ${request.requestedTransition.fromState}; gate is ${state.stage}`, {
+        issuedFrom: request.requestedTransition.fromState,
+        gate: state.stage,
+      });
+    }
+    if (request.missionStateVersion + 1 !== state.stateVersion) {
+      throw new KernelError("STALE_APPROVAL", `approval issued at state ${request.missionStateVersion + 1}; current is ${state.stateVersion}`, {
+        issuedAt: request.missionStateVersion + 1,
+        current: state.stateVersion,
+      });
+    }
+  }
+
+  /**
+   * A gate approves the mission's own finalized artifacts. Every subject must
+   * exist, belong to this mission, and match the stored manifest; the gate's
+   * bound outputs must be present (A07: wrong-mission subjects cannot authorize).
+   */
+  private assertApprovalSubjects(
+    state: MissionState,
+    subjects: readonly ArtifactSubjectRef[],
+    required: readonly { hash: string | null; artifactType: ArtifactType; label: string }[],
+  ): void {
+    for (const subject of subjects) {
+      const artifact = unwrap(this.storage.getArtifact(subject.artifactId));
+      if (artifact === undefined || artifact.missionId !== state.missionId) {
+        throw new KernelError("INVALID_SCHEMA", `approval subject ${subject.artifactId} is not an artifact of mission ${state.missionId}`, {
+          artifactId: subject.artifactId,
+        });
+      }
+      if (
+        artifact.artifactType !== subject.artifactType ||
+        artifact.contentSha256 !== subject.contentSha256 ||
+        artifact.finalizedAt !== subject.finalizedAt
+      ) {
+        throw new KernelError("STALE_APPROVAL", `approval subject ${subject.artifactId} does not match the stored artifact`, {
+          artifactId: subject.artifactId,
+        });
+      }
+    }
+    for (const item of required) {
+      if (item.hash === null) {
+        throw new KernelError("INVALID_SCHEMA", `${item.label} is not bound; the gate cannot be requested yet`, {});
+      }
+      if (!subjects.some((s) => s.artifactType === item.artifactType && s.contentSha256 === item.hash)) {
+        throw new KernelError("INVALID_SCHEMA", `${item.label} must be one of the approval subjects`, {});
+      }
+    }
+  }
+
   requestPlanApproval(input: { missionId: string; artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number }): ApprovalRequest {
     const state = this.current(input.missionId);
     if (state.stage !== "AWAITING_PLAN_APPROVAL") {
       throw new KernelError("ILLEGAL_TRANSITION", `approval requests originate from AWAITING_PLAN_APPROVAL, not ${state.stage}`, {});
     }
+    this.assertApprovalSubjects(state, input.artifactSubjects, [
+      { hash: state.boundPlanSha256, artifactType: "plan", label: "the bound plan" },
+    ]);
     const { request, envelope } = this.openApprovalRequest(state, input, "PLAN_APPROVAL", "IMPLEMENTATION");
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent, () => {
       // A gate event without its request row is a gate nobody can answer: the
@@ -376,7 +448,7 @@ export class ColonyKernel {
   recordApprovalDecision(input: { approvalRequestId: string; decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string; requestedChange?: boolean }): ApprovalRecord {
     const request = unwrap(this.storage.getApprovalRequest(input.approvalRequestId));
     if (request === undefined) throw new KernelError("APPROVAL_NOT_FOUND", `approval ${input.approvalRequestId} not found`, {});
-    if (!isHumanAuthority(input.decidedBy, AGENT_ROLE_IDS)) {
+    if (!isHumanAuthority(input.decidedBy, this.roles.roleIds())) {
       throw new KernelError("SELF_APPROVAL_DENIED", `agent identity ${input.decidedBy} cannot approve`, { decidedBy: input.decidedBy });
     }
     // N1 reqs 5-7 / A05: if an APPROVED record already exists, the live request
@@ -396,13 +468,24 @@ export class ColonyKernel {
       }
     }
     // Idempotent replay: an identical decision already recorded returns the
-    // original record without emitting a second transition event (N1).
+    // original record without emitting a second transition event (N1). An
+    // APPROVED record that has expired is never returned as granted, not even
+    // on replay (N1 req 8 / A07).
     if (existing !== undefined && existing.decision === input.decision) {
+      if (existing.decision === "APPROVED" && isExpiredAtCommit(request, this.clock.now())) {
+        throw new KernelError("EXPIRED_AT_COMMIT", `approval ${input.approvalRequestId} expired at commit`, {
+          approvalRequestId: input.approvalRequestId,
+          expiresAt: request.expiresAt,
+        });
+      }
       return existing;
     }
+    const state = this.current(request.missionId);
+    // N1 reqs 6-7 / A07: a decision is legal only for the gate that is open NOW.
+    // A request left pending at an earlier gate must not authorize a later one.
+    this.assertApprovalBindsGate(request, state);
     const record = this.buildApprovalRecord(request, input);
     unwrap(this.storage.recordApprovalDecision(record));
-    const state = this.current(request.missionId);
     const envelope = this.envelope(
       ET.APPROVAL_RECORDED,
       state,
@@ -484,7 +567,7 @@ export class ColonyKernel {
   recordApprovalDecisionRaw(input: { approvalRequestId: string; decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string }): ApprovalRecord {
     const request = unwrap(this.storage.getApprovalRequest(input.approvalRequestId));
     if (request === undefined) throw new KernelError("APPROVAL_NOT_FOUND", `approval ${input.approvalRequestId} not found`, {});
-    if (!isHumanAuthority(input.decidedBy, AGENT_ROLE_IDS)) {
+    if (!isHumanAuthority(input.decidedBy, this.roles.roleIds())) {
       throw new KernelError("SELF_APPROVAL_DENIED", `agent identity ${input.decidedBy} cannot approve`, { decidedBy: input.decidedBy });
     }
     const record = this.buildApprovalRecord(request, input);
@@ -512,6 +595,18 @@ export class ColonyKernel {
     // Precondition: the mission must exist before an artifact can be finalized.
     this.current(input.missionId);
     const role = this.roles.role(input.roleId);
+    // A16 / role contract: a role finalizes only the artifact types its own
+    // capabilities produce; the capability manifests are the one home for that
+    // mapping (deny-by-default, no caller-declared scope).
+    const produced = CAPABILITY_MANIFESTS
+      .filter((capability) => role.capabilities.includes(capability.capabilityId))
+      .flatMap((capability) => capability.producesArtifactTypes);
+    if (!produced.includes(input.artifactType)) {
+      throw new KernelError("CAPABILITY_DENIED", `role ${role.roleId} cannot produce ${input.artifactType}`, {
+        roleId: role.roleId,
+        artifactType: input.artifactType,
+      });
+    }
     const contentSha256 = sha256Hex(canonicalArtifactContent(input.content));
     const artifactId = input.artifactId ?? this.ids.nextId("artifact");
     const manifest = buildManifest({
@@ -727,7 +822,7 @@ export class ColonyKernel {
   }
 
   resumeFromHumanReview(missionId: string, decidedBy: string, newEvidence: string): MissionState {
-    if (!isHumanAuthority(decidedBy, AGENT_ROLE_IDS)) {
+    if (!isHumanAuthority(decidedBy, this.roles.roleIds())) {
       throw new KernelError("SELF_APPROVAL_DENIED", "resume requires a human authority", {});
     }
     return this.commit(missionId, (state) => ({
@@ -767,6 +862,10 @@ export class ColonyKernel {
     if (state.stage !== "AWAITING_PUBLISH_APPROVAL") {
       throw new KernelError("ILLEGAL_TRANSITION", `package approval originates from AWAITING_PUBLISH_APPROVAL, not ${state.stage}`, {});
     }
+    this.assertApprovalSubjects(state, input.artifactSubjects, [
+      { hash: state.boundCandidateSha256, artifactType: "implementation_candidate", label: "the bound candidate" },
+      { hash: state.boundVerificationSha256, artifactType: "verification_report", label: "the bound verification" },
+    ]);
     const { request, envelope } = this.openApprovalRequest(state, input, "PACKAGE_APPROVAL", "READY_TO_PUBLISH");
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent, () => {
       // Same effect as the plan gate: the request row is part of the commit.

@@ -134,6 +134,20 @@ describe("E. budgets", () => {
     ).toThrow(/TOPUP_FORBIDDEN/);
   });
 
+  it("E-06b: a top-up amount must be a positive integer", () => {
+    const k = buildTestKernel();
+    const { missionId } = toImplementation(k);
+    k.kernel.setBudgetLimit(missionId, "monetary_cost", 100);
+    const record = fakeTopUpApproval(k, missionId);
+    for (const amount of [-100, 0, 1.5]) {
+      expect(() =>
+        k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount, approvalRecordId: record }),
+      ).toThrow(/INVALID_SCHEMA/);
+    }
+    expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(100);
+    expect(k.storage.isApprovalConsumed(record)).toBe(false);
+  });
+
   it("E-07: hard exhaustion blocks further execution", () => {
     const k = buildTestKernel();
     const { missionId } = toImplementation(k);

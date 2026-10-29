@@ -37,6 +37,8 @@ export interface CapabilityManifest {
 
 export interface RoleRegistryView {
   role(roleId: string): RoleManifest;
+  /** Every role id the kernel actually knows. Drives the approver deny-list. */
+  roleIds(): readonly string[];
   /** Deny-by-default check; unknown role fails closed. */
   hasCapability(roleId: string, capabilityId: CapabilityId): boolean;
   /** Structural ban: a role can never mutate its own manifest or self-grant. */
@@ -72,6 +74,10 @@ export class RoleRegistry implements RoleRegistryView {
     return role;
   }
 
+  roleIds(): readonly string[] {
+    return [...this.roles.keys()];
+  }
+
   hasCapability(roleId: string, capabilityId: CapabilityId): boolean {
     const role = this.roles.get(roleId);
     if (role === undefined) return false; // deny by default, fail closed
@@ -99,10 +105,9 @@ export class RoleRegistry implements RoleRegistryView {
 /**
  * M1A test roles (mission §10). No publication capability exists anywhere.
  *
- * One home per fact: the agent-role ids the human-authority gate checks
- * against are derived from these manifests, so a role added here is denied
- * approval automatically and a role removed here cannot linger in a second,
- * hand-maintained list.
+ * The agent-role ids the human-authority gate checks against are the registry's
+ * own `roleIds()`, never a second hand-maintained list: a role added to the
+ * injected registry is denied approval automatically.
  */
 const TEST_ROLE_MANIFESTS: readonly RoleManifest[] = [
   {
@@ -134,16 +139,6 @@ const TEST_ROLE_MANIFESTS: readonly RoleManifest[] = [
     mayNotApproveOwnOutput: true,
   },
 ];
-
-/**
- * The agent role ids: identities that may never act as a human approver
- * (N1 req 10). Derived from the registry's own manifests, so the list and
- * the registry cannot drift apart.
- *
- * Never empty by construction — `RoleRegistry` refuses an empty role list,
- * and this list is the registry's manifests.
- */
-export const AGENT_ROLE_IDS: readonly string[] = TEST_ROLE_MANIFESTS.map((role) => role.roleId);
 
 export function testRoleRegistry(): RoleRegistry {
   return new RoleRegistry(TEST_ROLE_MANIFESTS);

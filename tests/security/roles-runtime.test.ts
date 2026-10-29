@@ -182,3 +182,13 @@ import { RoleRegistry } from "../../src/domain/capabilities/registry.js";
 function roleRegistryRef() {
   return { RoleRegistry };
 }
+
+describe("F2. artifact provenance at the seam", () => {
+  it("a role cannot finalize an artifact type its capabilities do not produce", () => {
+    const k = buildTestKernel();
+    const { missionId } = toPlanGate(k);
+    expect(() =>
+      k.kernel.finalizeArtifact({ missionId, roleId: "craftsman", artifactType: "verification_report", content: { fields: { result: "pass" } } }),
+    ).toThrow(/CAPABILITY_DENIED/);
+  });
+});

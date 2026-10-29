@@ -17,7 +17,7 @@
 import { describe, expect, it } from "vitest";
 import { buildTestKernel, toPlanGate, FIXED_INSTANT } from "../../src/testing/builders/test-kernel.js";
 import { isHumanAuthority } from "../../src/domain/approvals/approval.js";
-import { AGENT_ROLE_IDS, RoleRegistry, testRoleRegistry } from "../../src/domain/capabilities/registry.js";
+import { RoleRegistry, testRoleRegistry, type RoleManifest } from "../../src/domain/capabilities/registry.js";
 
 /** File a plan-approval request the way the real machinery does. */
 function planApprovalRequest(k: ReturnType<typeof buildTestKernel>, missionId: string, planArtifactId: string, planSha: string) {
@@ -33,9 +33,10 @@ function planApprovalRequest(k: ReturnType<typeof buildTestKernel>, missionId: s
 
 describe("F1. human-authority precondition", () => {
   it("the agent-role list the call site uses is non-empty and names real roles", () => {
-    expect(AGENT_ROLE_IDS.length).toBeGreaterThan(0);
+    const agentRoleIds = testRoleRegistry().roleIds();
+    expect(agentRoleIds.length).toBeGreaterThan(0);
     const roles = testRoleRegistry();
-    for (const roleId of AGENT_ROLE_IDS) {
+    for (const roleId of agentRoleIds) {
       // the list cannot name a role the kernel does not have
       expect(() => roles.role(roleId)).not.toThrow();
     }
@@ -45,7 +46,7 @@ describe("F1. human-authority precondition", () => {
     const k = buildTestKernel();
     const { missionId, planArtifactId, planSha } = toPlanGate(k);
     const request = planApprovalRequest(k, missionId, planArtifactId, planSha);
-    for (const roleId of AGENT_ROLE_IDS) {
+    for (const roleId of testRoleRegistry().roleIds()) {
       expect(() =>
         k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: roleId }),
       ).toThrow(/SELF_APPROVAL_DENIED/);
@@ -77,5 +78,20 @@ describe("F1. human-authority precondition", () => {
 
   it("the agent list cannot come from an empty registry — the registry refuses to be built without roles", () => {
     expect(() => new RoleRegistry([])).toThrow(/INTEGRITY_FAILURE/);
+  });
+
+  it("a role the injected registry knows is denied, not just the test manifests", () => {
+    const base = testRoleRegistry();
+    const agentX: RoleManifest = { schemaVersion: 1, roleId: "agent-x", roleVersion: 1, capabilities: [], mayNotApproveOwnOutput: true };
+    const roles = new RoleRegistry([...base.roleIds().map((id) => base.role(id)), agentX]);
+    const k = buildTestKernel({ roles });
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const request = planApprovalRequest(k, missionId, planArtifactId, planSha);
+    expect(() =>
+      k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "agent-x" }),
+    ).toThrow(/SELF_APPROVAL_DENIED/);
+    expect(() =>
+      k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" }),
+    ).not.toThrow();
   });
 });

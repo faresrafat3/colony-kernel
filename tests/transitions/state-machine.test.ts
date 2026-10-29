@@ -57,14 +57,15 @@ describe("A. state machine", () => {
 
   it("A-06: bounded plan-rework cycle exhausts at 2 and blocks the third", () => {
     const k = buildTestKernel();
-    const { missionId, planSha } = toPlanGate(k);
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const planSubjects = [{ artifactId: planArtifactId, artifactType: "plan", artifactSchemaVersion: 1, contentSha256: planSha, finalizedAt: FIXED_INSTANT.toISOString() }];
     // E08 moved PLANNING -> AWAITING_PLAN_APPROVAL; return via rejected+request-change (E11).
     // The mission is AT the gate. Legal cycle per round: E11 (reject with
     // change, consumes gateReissueCount) → PLANNING → E07 propose → CHALLENGE
     // → E09 revise (consumes planReworkCount) → PLANNING → E07 → CHALLENGE →
     // E08 → AWAITING_PLAN_APPROVAL …
     for (let i = 0; i < 2; i++) {
-      const r = k.kernel.requestPlanApproval({ missionId, artifactSubjects: [], requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
+      const r = k.kernel.requestPlanApproval({ missionId, artifactSubjects: planSubjects, requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
       k.kernel.recordApprovalDecision({ approvalRequestId: r.approvalRequestId, decision: "REJECTED", decidedBy: "captain", requestedChange: true }); // E11 -> PLANNING
       expect(k.kernel.getMission(missionId)?.stage).toBe("PLANNING");
       k.kernel.proposePlan(missionId, planSha); // E07 PLANNING->CHALLENGE
@@ -77,7 +78,7 @@ describe("A. state machine", () => {
     expect(counters?.gateReissueCount).toBe(COUNTER_LIMITS.gateReissueCount);
     // Third gate-reissue must fail closed at the counter guard (mission is at
     // the gate after round 1's E08).
-    const r3 = k.kernel.requestPlanApproval({ missionId, artifactSubjects: [], requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
+    const r3 = k.kernel.requestPlanApproval({ missionId, artifactSubjects: planSubjects, requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
     expect(() =>
       k.kernel.recordApprovalDecision({ approvalRequestId: r3.approvalRequestId, decision: "REJECTED", decidedBy: "captain", requestedChange: true }),
     ).toThrow(/REVISION_LIMIT_EXCEEDED/);
@@ -98,7 +99,7 @@ describe("A. state machine", () => {
   it("A-08: reserved public states are unreachable (PUBLICATION_DISABLED on public-action events)", () => {
     const k = buildTestKernel();
     const { missionId, planArtifactId, planSha } = toPlanGate(k);
-    const request = k.kernel.requestPlanApproval({ missionId, artifactSubjects: [{ artifactId: planArtifactId, artifactType: "plan", artifactSchemaVersion: 1, contentSha256: planSha, finalizedAt: "" }], requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
+    const request = k.kernel.requestPlanApproval({ missionId, artifactSubjects: [{ artifactId: planArtifactId, artifactType: "plan", artifactSchemaVersion: 1, contentSha256: planSha, finalizedAt: FIXED_INSTANT.toISOString() }], requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
     k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
     const v = k.kernel.getMission(missionId)?.stateVersion;
     const { buildEnvelopeWithPayload } = publicActionProbe();

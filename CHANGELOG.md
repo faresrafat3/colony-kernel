@@ -7,6 +7,20 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 
 ## [Unreleased]
 
+### Fixed
+
+- Application-seam guards (audit 2026-10-29). An approval now authorizes only
+  the gate it was issued for: purpose, from-state and the request's state
+  version are checked at decision time, so a pending plan request can no longer
+  open the publish gate. Gate requests must name the mission's own finalized
+  artifacts (the bound plan; the bound candidate and verification), a reissued
+  gate makes the earlier request stale, and an expired approval is refused on
+  replay as well as on first commit. The approver deny-list now comes from the
+  injected role registry (`roleIds()`), so a custom registry cannot smuggle an
+  agent past the human gate. A role can finalize only the artifact types its
+  capabilities produce. Top-up amounts must be positive integers and the ledger
+  invariants are asserted on every top-up. Tests 150 → 157.
+
 ### Added
 
 - `docs/dsh-runtime-pin-plan.md`: the plan and decision record the normative
