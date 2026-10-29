@@ -152,6 +152,18 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 
 ### Fixed
 
+- Budget and gate rows were written outside the event's transaction. On an
+  ABORTED mission `reserveBudget` returned `ILLEGAL_TRANSITION` while the ledger
+  kept the reservation (`reserved=10`, `ledgerVersion=1`) and the event log held
+  no `BUDGET_RESERVED`; `settle` and `release` shared the shape, and
+  `applyBudgetTopUp` consumed the approval before a commit that could still
+  fail. `requestPlanApproval` and `requestPackageApproval` wrote the request row
+  *after* the commit, so a failure between the two left a gate nobody could
+  answer. `atomicApply` now takes an `effects` callback that stages those rows
+  in the same transaction; a throw rolls back events, state and rows together.
+  Audit facts (approval records, rejections, finalized artifacts) stay outside
+  on purpose: they must survive a refusal (C-04, C-10, A04, H-03).
+  Pinned by `tests/contracts/atomic-effects.test.ts`.
 - Review finding **F1** (`reports/INDEPENDENT_REVIEW_1A.md`) closed at the
   application layer. `isHumanAuthority(decidedBy, [])` returns `true` for every
   identity, so a call site passing an empty list would accept an agent as the
