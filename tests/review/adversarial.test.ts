@@ -123,6 +123,13 @@ describe("A2 — content-addressed approval cannot be re-pointed", () => {
     expect(canonicalJson({ b: 1, a: 2 })).toBe(canonicalJson({ a: 2, b: 1 }));
   });
 
+  it("canonical JSON sorts keys by UTF-16 code units, including astral characters", () => {
+    const astral = "\u{1F600}"; // surrogate pair D83D DE00
+    const replacement = "\uFFFD"; // single unit FFFD: sorts after the pair
+    const expected = `{${JSON.stringify(astral)}:1,${JSON.stringify(replacement)}:2}`;
+    expect(canonicalJson({ [replacement]: 2, [astral]: 1 })).toBe(expected);
+  });
+
   it("canonical JSON refuses values that cannot be hashed stably", () => {
     // A silent fallback here would let two different payloads share a hash.
     expect(() => canonicalJson({ x: Number.NaN })).toThrow();

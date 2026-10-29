@@ -50,6 +50,10 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   approval requests are immutable: a duplicate id with different bytes is
   `APPROVAL_CONFLICT`, identical bytes are an idempotent replay. Tests
   165 → 166.
+- Canonical JSON sorts object keys by UTF-16 code units, as RFC 8785 requires:
+  the previous code-point comparator ordered astral characters (emoji) wrongly,
+  so a payload or artifact with such a key hashed differently from a conforming
+  JCS implementation. Tests 166 → 167.
 
 ### Added
 

@@ -57,17 +57,8 @@ function serialize(value: Json): string {
   if (type === "string") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(serialize).join(",")}]`;
   const record = value as { [key: string]: Json };
-  const keys = Object.keys(record).sort((a, b) => (ltUtf16(a, b) ? -1 : ltUtf16(b, a) ? 1 : 0));
+  // RFC 8785 sorts by UTF-16 code units; JavaScript string comparison is
+  // exactly that (code points get the astral range wrong).
+  const keys = Object.keys(record).sort();
   return `{${keys.map((k) => `${JSON.stringify(k)}:${serialize(record[k])}`).join(",")}}`;
-}
-
-/** UTF-16 code-unit ordering (JCS sort), not locale collation. */
-function ltUtf16(a: string, b: string): boolean {
-  const ca = Array.from(a).map((c) => c.codePointAt(0) as number);
-  const cb = Array.from(b).map((c) => c.codePointAt(0) as number);
-  const len = Math.min(ca.length, cb.length);
-  for (let i = 0; i < len; i++) {
-    if (ca[i] !== cb[i]) return (ca[i] as number) < (cb[i] as number);
-  }
-  return ca.length < cb.length;
 }
