@@ -425,6 +425,24 @@ export class ColonyKernel {
     }
   }
 
+  /**
+   * N1 req 11 / E13,E29: an expired gate pauses for human review, durably.
+   * Called only after the expiry refusal is on the record, so the pause cannot
+   * mask the refusal. Recovery re-enters the gate (E36) for a bounded reissue.
+   */
+  private pauseOnExpiry(request: ApprovalRequest, state: MissionState): void {
+    const event = this.envelope(
+      ET.APPROVAL_EXPIRED,
+      state,
+      this.actorFor(null, "KERNEL_POLICY", "kernel"),
+      { approvalRequestId: request.approvalRequestId },
+      { correlationId: this.ids.nextId("corr"), idempotencyKey: `approval:${request.approvalRequestId}:expired` },
+    );
+    const committed = this.storage.atomicApply(request.missionId, [event], state.stateVersion, applyEvent);
+    if (!committed.ok) throw committed.error;
+    this.noteTransition(request.missionId, committed.value.state, committed.value.appended);
+  }
+
   requestPlanApproval(input: { missionId: string; artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number }): ApprovalRequest {
     const state = this.current(input.missionId);
     if (state.stage !== "AWAITING_PLAN_APPROVAL") {
@@ -540,6 +558,10 @@ export class ColonyKernel {
           }),
         );
         this.telemetry.record({ kind: "rejection", missionId: request.missionId, code: e.code, detail: e.toJSON() });
+        if (e.code === "EXPIRED_AT_COMMIT") {
+          // E13/E29: the refusal is already durable; now pause the mission.
+          this.pauseOnExpiry(request, state);
+        }
       }
       throw e;
     }

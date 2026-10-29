@@ -65,10 +65,12 @@ describe("C. approvals", () => {
     // Advance the injected clock past expiry.
     const later = new SteppingClock(new Date(FIXED_INSTANT.getTime() + 60_000), 1);
     k2RebindClock(k, later);
-    // The consumption must be refused: stage stays at the gate, the record is
-    // stored but never consumed, and a durable rejection is filed.
+    // The consumption must be refused and the gate must pause for human
+    // review: the record is stored but never consumed, a durable rejection is
+    // filed, and E13 moves the mission to HUMAN_REVIEW_REQUIRED.
     expect(() => k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" })).toThrow(/EXPIRED_AT_COMMIT/);
-    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+    expect(k.kernel.getMission(missionId)?.stage).toBe("HUMAN_REVIEW_REQUIRED");
+    expect(k.kernel.getMission(missionId)?.resumeStage).toBe("AWAITING_PLAN_APPROVAL");
     const record = k.storage.getApprovalRecordByRequest(request.approvalRequestId).value;
     expect(record?.decision).toBe("APPROVED");
     expect(k.storage.isApprovalConsumed(record?.approvalRecordId ?? "")).toBe(false);
@@ -134,7 +136,7 @@ describe("C. approvals", () => {
     // The commit is refused: decision recorded, transition blocked, record
     // never consumed, and a durable EXPIRED_AT_COMMIT rejection is filed.
     expect(() => k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" })).toThrow(/EXPIRED_AT_COMMIT/);
-    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+    expect(k.kernel.getMission(missionId)?.stage).toBe("HUMAN_REVIEW_REQUIRED");
     const record = k.storage.getApprovalRecordByRequest(request.approvalRequestId).value;
     expect(record?.decision).toBe("APPROVED");
     expect(k.storage.isApprovalConsumed(record?.approvalRecordId ?? "")).toBe(false);
@@ -149,7 +151,7 @@ describe("C. approvals", () => {
     expect(approve).toThrow(/EXPIRED_AT_COMMIT/);
     // The second call replays the stored record; it must still refuse.
     expect(approve).toThrow(/EXPIRED_AT_COMMIT/);
-    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+    expect(k.kernel.getMission(missionId)?.stage).toBe("HUMAN_REVIEW_REQUIRED");
     const record = k.storage.getApprovalRecordByRequest(request.approvalRequestId).value;
     expect(k.storage.isApprovalConsumed(record?.approvalRecordId ?? "")).toBe(false);
   });
@@ -197,6 +199,26 @@ describe("C. approvals", () => {
       }),
     ).toThrow(/STALE_APPROVAL/);
     expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+  });
+
+  it("C-15: an expiry pause resumes to the gate for a bounded reissue", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const expired = gateRequest(k, missionId, planArtifactId, planSha, -1);
+    expect(() =>
+      k.kernel.recordApprovalDecision({ approvalRequestId: expired.approvalRequestId, decision: "APPROVED", decidedBy: "captain" }),
+    ).toThrow(/EXPIRED_AT_COMMIT/);
+    const paused = k.kernel.getMission(missionId);
+    expect(paused?.stage).toBe("HUMAN_REVIEW_REQUIRED");
+    expect(paused?.resumeStage).toBe("AWAITING_PLAN_APPROVAL");
+    expect(k.kernel.getEvents(missionId).some((e) => e.eventType === "APPROVAL_EXPIRED")).toBe(true);
+    // pause stages accept no automatic work
+    expect(() => k.kernel.startRecon(missionId, "b")).toThrow(/pause stage/);
+    k.kernel.resumeFromHumanReview(missionId, "captain", "reviewed the expiry");
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+    const retry = gateRequest(k, missionId, planArtifactId, planSha);
+    k.kernel.recordApprovalDecision({ approvalRequestId: retry.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    expect(k.kernel.getMission(missionId)?.stage).toBe("IMPLEMENTATION");
   });
 });
 

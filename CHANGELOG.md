@@ -35,6 +35,10 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   swap and the event append are one operation, a batch that disagrees with the
   next state is refused with no writes, and the append constraints live in one
   helper shared with `appendEvent`. Tests 160 → 161.
+- An expired gate now pauses the mission (E13/E29): the refusal is recorded
+  first, then a durable `APPROVAL_EXPIRED` event moves it to
+  `HUMAN_REVIEW_REQUIRED`, and a human resume re-enters the gate for a bounded
+  reissue. Tests 161 → 162.
 
 ### Added
 
