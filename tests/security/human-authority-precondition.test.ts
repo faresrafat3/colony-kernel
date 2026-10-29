@@ -56,7 +56,7 @@ describe("F1. human-authority precondition", () => {
       ).toThrow(/SELF_APPROVAL_DENIED/);
     }
     // no APPROVED record was stored by any agent identity
-    const stored = k.kernel.storage.getApprovalRecordByRequest(request.approvalRequestId);
+    const stored = k.storage.getApprovalRecordByRequest(request.approvalRequestId);
     expect(stored.ok ? stored.value?.decision : undefined).not.toBe("APPROVED");
   });
 

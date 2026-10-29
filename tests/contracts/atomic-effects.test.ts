@@ -127,7 +127,7 @@ function approvedTopUp(k: ReturnType<typeof buildTestKernel>, missionId: string)
     authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
     optionalReason: null,
   };
-  k.kernel.storage.createApprovalRequest(request);
-  k.kernel.storage.recordApprovalDecision(record);
+  k.storage.createApprovalRequest(request);
+  k.storage.recordApprovalDecision(record);
   return record.approvalRecordId;
 }

@@ -220,6 +220,17 @@ describe("C. approvals", () => {
     k.kernel.recordApprovalDecision({ approvalRequestId: retry.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
     expect(k.kernel.getMission(missionId)?.stage).toBe("IMPLEMENTATION");
   });
+
+  it("C-16: a stored approval request cannot be replaced with different bytes", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const request = gateRequest(k, missionId, planArtifactId, planSha);
+    const conflict = k.storage.createApprovalRequest({ ...request, nonce: "different-nonce" });
+    expect(conflict.ok).toBe(false);
+    if (!conflict.ok) expect(conflict.error.code).toBe("APPROVAL_CONFLICT");
+    // identical bytes are an idempotent replay
+    expect(k.storage.createApprovalRequest(request).ok).toBe(true);
+  });
 });
 
 function buildFresh(k: TestKernel): TestKernel {

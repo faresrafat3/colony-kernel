@@ -41,7 +41,7 @@ describe("F. role boundaries", () => {
   it("F-04: verifier cannot mutate implementation artifacts (scope separation)", () => {
     const k = buildTestKernel();
     const { missionId, candidateArtifactId } = toImplementation(k);
-    const attempt = k.kernel.storage.finalizeArtifact({
+    const attempt = k.storage.finalizeArtifact({
       schemaVersion: 1,
       artifactId: candidateArtifactId,
       missionId,

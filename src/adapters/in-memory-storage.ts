@@ -12,7 +12,7 @@ import type { Clock } from "../ports/kernel-ports.js";
 import type { EventEnvelope } from "../domain/events/envelope.js";
 import type { MissionState } from "../domain/mission/mission-state.js";
 import type { ArtifactManifest } from "../domain/artifacts/artifact.js";
-import type { ApprovalRequest, ApprovalRecord } from "../domain/approvals/approval.js";
+import { approvalSubjectHash, type ApprovalRequest, type ApprovalRecord } from "../domain/approvals/approval.js";
 import type { BudgetLedger, ResourceClass } from "../domain/budgets/ledger.js";
 
 interface RejectionRecord {
@@ -244,7 +244,21 @@ export class InMemoryColonyStorage implements ColonyStorage {
     return { ok: true, value: [...this.artifacts.values()].filter((a) => a.missionId === missionId) };
   }
 
-  createApprovalRequest(request: ApprovalRequest): { ok: true; value: void } {
+  createApprovalRequest(request: ApprovalRequest): { ok: true; value: void } | { ok: false; error: KernelError } {
+    const existing = this.approvalRequests.get(request.approvalRequestId);
+    if (existing !== undefined) {
+      // Requests are content-addressed approval artifacts: identical bytes are
+      // an idempotent replay; different bytes are a replacement attempt (A05).
+      if (approvalSubjectHash(existing) !== approvalSubjectHash(request)) {
+        return {
+          ok: false,
+          error: new KernelError("APPROVAL_CONFLICT", `approval request ${request.approvalRequestId} cannot be replaced`, {
+            approvalRequestId: request.approvalRequestId,
+          }),
+        };
+      }
+      return { ok: true, value: undefined };
+    }
     this.approvalRequests.set(request.approvalRequestId, { ...request });
     return { ok: true, value: undefined };
   }

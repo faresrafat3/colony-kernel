@@ -29,7 +29,7 @@ describe("H. recovery", () => {
     const k = buildTestKernel();
     const { missionId } = toImplementation(k);
     // Simulate: artifact persisted, event commit "crashed" (never ran).
-    const orphan = k.kernel.storage.finalizeArtifact({
+    const orphan = k.storage.finalizeArtifact({
       schemaVersion: 1,
       artifactId: "orphan-artifact",
       missionId,
@@ -45,7 +45,7 @@ describe("H. recovery", () => {
     // so state reconstruction is unaffected (evidence survives in the store).
     const replayed = k.kernel.replay(missionId);
     expect(replayed).toEqual(k.kernel.getMission(missionId));
-    const orphanRead = k.kernel.storage.getArtifact("orphan-artifact");
+    const orphanRead = k.storage.getArtifact("orphan-artifact");
     expect(orphanRead.ok && orphanRead.value?.contentSha256).toBe("orphan-hash");
   });
 
@@ -107,8 +107,8 @@ describe("I. isolation model", () => {
     const a = k.kernel.createMission({ title: "a" }).missionId;
     const b = k.kernel.createMission({ title: "b" }).missionId;
     k.kernel.finalizeArtifact({ missionId: a, roleId: "first-mate", artifactType: "recon_brief", content: { fields: { m: "a" } } });
-    const listA = k.kernel.storage.listArtifacts(a);
-    const listB = k.kernel.storage.listArtifacts(b);
+    const listA = k.storage.listArtifacts(a);
+    const listB = k.storage.listArtifacts(b);
     if (!listA.ok || !listB.ok) throw new Error("storage failure");
     expect(listA.value.every((x) => x.missionId === a)).toBe(true);
     expect(listB.value.length).toBe(0);
@@ -116,24 +116,24 @@ describe("I. isolation model", () => {
 
   it("I-04: second writer fails lease acquisition (single-writer enforcement, A26)", () => {
     const k = buildTestKernel();
-    const first = k.kernel.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() });
+    const first = k.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() });
     expect(first.ok).toBe(true);
-    const second = k.kernel.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() });
+    const second = k.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() });
     expect(second.ok).toBe(false);
     if (!second.ok) expect(second.error.code).toBe("LEASE_CONFLICT");
-    expect(k.kernel.storage.releaseLease("mission-writer").ok).toBe(true);
-    expect(k.kernel.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() }).ok).toBe(true);
+    expect(k.storage.releaseLease("mission-writer").ok).toBe(true);
+    expect(k.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() }).ok).toBe(true);
   });
 
   it("I-05: an expired lease frees the name; an unparseable ttl is refused", () => {
     let now = FIXED_INSTANT.getTime();
     const k = buildTestKernel({ clock: { now: () => new Date(now) } });
     const ttl = (at: number) => ({ expiresAt: new Date(at).toISOString() });
-    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
-    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(false);
+    expect(k.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
+    expect(k.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(false);
     now += 60_000; // at the expiry instant the lease is already free
-    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
-    const bad = k.kernel.storage.acquireLease("writer", { expiresAt: "not-a-date" });
+    expect(k.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
+    const bad = k.storage.acquireLease("writer", { expiresAt: "not-a-date" });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.error.code).toBe("INVALID_SCHEMA");
   });
@@ -142,19 +142,19 @@ describe("I. isolation model", () => {
     let now = FIXED_INSTANT.getTime();
     const k = buildTestKernel({ clock: { now: () => new Date(now) } });
     const ttl = (at: number) => ({ expiresAt: new Date(at).toISOString() });
-    expect(k.kernel.storage.renewLease("writer", ttl(now + 60_000)).ok).toBe(false);
-    expect(k.kernel.storage.acquireLease("writer", ttl(now + 30_000)).ok).toBe(true);
+    expect(k.storage.renewLease("writer", ttl(now + 60_000)).ok).toBe(false);
+    expect(k.storage.acquireLease("writer", ttl(now + 30_000)).ok).toBe(true);
     // extend before the original expiry
-    expect(k.kernel.storage.renewLease("writer", ttl(now + 120_000)).ok).toBe(true);
+    expect(k.storage.renewLease("writer", ttl(now + 120_000)).ok).toBe(true);
     now += 60_000; // past the original ttl, before the renewal
-    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(false);
+    expect(k.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(false);
     now += 61_000; // past the renewal: the name is free again
-    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
+    expect(k.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
     now += 61_000; // the acquired lease has also expired
-    const expired = k.kernel.storage.renewLease("writer", ttl(now + 60_000));
+    const expired = k.storage.renewLease("writer", ttl(now + 60_000));
     expect(expired.ok).toBe(false);
     if (!expired.ok) expect(expired.error.code).toBe("LEASE_NOT_HELD");
-    const bad = k.kernel.storage.renewLease("writer", { expiresAt: "not-a-date" });
+    const bad = k.storage.renewLease("writer", { expiresAt: "not-a-date" });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.error.code).toBe("INVALID_SCHEMA");
   });
@@ -162,15 +162,15 @@ describe("I. isolation model", () => {
   it("I-07: reserveMissionSequence hands out distinct monotone values", () => {
     const k = buildTestKernel();
     const { missionId } = k.kernel.createMission({ title: "t" }); // sequence 1 committed
-    const first = k.kernel.storage.reserveMissionSequence(missionId);
-    const second = k.kernel.storage.reserveMissionSequence(missionId);
+    const first = k.storage.reserveMissionSequence(missionId);
+    const second = k.storage.reserveMissionSequence(missionId);
     expect(first.ok && first.value).toBe(2);
     expect(second.ok && second.value).toBe(3);
     k.kernel.startMission(missionId); // commits sequence 2
-    const third = k.kernel.storage.reserveMissionSequence(missionId);
+    const third = k.storage.reserveMissionSequence(missionId);
     expect(third.ok && third.value).toBe(4);
-    const unknownA = k.kernel.storage.reserveMissionSequence("no-such-mission");
-    const unknownB = k.kernel.storage.reserveMissionSequence("no-such-mission");
+    const unknownA = k.storage.reserveMissionSequence("no-such-mission");
+    const unknownB = k.storage.reserveMissionSequence("no-such-mission");
     expect(unknownA.ok && unknownA.value).toBe(1);
     expect(unknownB.ok && unknownB.value).toBe(2);
   });
@@ -198,15 +198,15 @@ describe("I. isolation model", () => {
       payloadSha256: canonicalPayloadHash(payload),
     };
     const next = applyEvent(before, event);
-    expect(k.kernel.storage.compareAndSwapMissionState(missionId, before.stateVersion, next, [event]).ok).toBe(true);
+    expect(k.storage.compareAndSwapMissionState(missionId, before.stateVersion, next, [event]).ok).toBe(true);
     expect(k.kernel.getMission(missionId)?.stateVersion).toBe(next.stateVersion);
     expect(k.kernel.getEvents(missionId)).toHaveLength(2);
     // A stale expected version writes nothing.
-    const stale = k.kernel.storage.compareAndSwapMissionState(missionId, before.stateVersion, next, []);
+    const stale = k.storage.compareAndSwapMissionState(missionId, before.stateVersion, next, []);
     expect(stale.ok).toBe(false);
     if (!stale.ok) expect(stale.error.code).toBe("CONCURRENCY_CONFLICT");
     // A state/event batch that disagrees writes nothing.
-    const mismatch = k.kernel.storage.compareAndSwapMissionState(missionId, next.stateVersion, next, [event]);
+    const mismatch = k.storage.compareAndSwapMissionState(missionId, next.stateVersion, next, [event]);
     expect(mismatch.ok).toBe(false);
     if (!mismatch.ok) expect(mismatch.error.code).toBe("INTERNAL_INVARIANT_VIOLATION");
     expect(k.kernel.getEvents(missionId)).toHaveLength(2);

@@ -4,22 +4,24 @@ import { buildTestKernel, toImplementation, FIXED_INSTANT } from "../../src/test
 import { canonicalArtifactContent } from "../../src/domain/artifacts/artifact.js";
 import { sha256Hex } from "../../src/domain/support/sha256.js";
 import type { ResourceClass } from "../../src/domain/budgets/ledger.js";
+import { DeterministicClock } from "../../src/adapters/kernel-adapters.js";
+import { TamperingStorage } from "../support/tampering-storage.js";
 
 describe("D. artifacts", () => {
   it("D-01: finalized artifact is content-addressed (sha256 over canonical bytes)", () => {
     const k = buildTestKernel();
     const { missionId, candidateSha } = toImplementation(k);
     expect(candidateSha).toBe(sha256Hex('{"patch":"guard"}'));
-    const stored = k.kernel.storage.getArtifact(candidateSha ? "nope" : "x");
+    const stored = k.storage.getArtifact(candidateSha ? "nope" : "x");
     void stored;
-    const artifacts = k.kernel.storage.listArtifacts(missionId);
+    const artifacts = k.storage.listArtifacts(missionId);
     expect(artifacts.ok && artifacts.value.some((a) => a.contentSha256 === candidateSha)).toBe(true);
   });
 
   it("D-02: finalized artifact is immutable — replacement with different content refuses", () => {
     const k = buildTestKernel();
     const { missionId, candidateArtifactId } = toImplementation(k);
-    const attempt = k.kernel.storage.finalizeArtifact({
+    const attempt = k.storage.finalizeArtifact({
       schemaVersion: 1,
       artifactId: candidateArtifactId,
       missionId,
@@ -46,7 +48,7 @@ describe("D. artifacts", () => {
   it("D-04: identical re-finalization is idempotent (no duplicate rows)", () => {
     const k = buildTestKernel();
     const { missionId, candidateArtifactId, candidateSha } = toImplementation(k);
-    const again = k.kernel.storage.finalizeArtifact({
+    const again = k.storage.finalizeArtifact({
       schemaVersion: 1,
       artifactId: candidateArtifactId,
       missionId,
@@ -58,8 +60,7 @@ describe("D. artifacts", () => {
       contentBytes: 15,
     });
     expect(again.ok).toBe(true);
-    const list = k.kernel.storage.listArtifacts(missionId);
-    if (!list.ok) throw list.error;
+    const list = k.storage.listArtifacts(missionId);
     expect(list.value.filter((a) => a.artifactId === candidateArtifactId).length).toBe(1);
   });
 });
@@ -190,13 +191,15 @@ describe("E. budgets", () => {
   });
 
   it("E-12: a top-up request mutated after the record is refused", () => {
-    const k = buildTestKernel();
+    const clock = new DeterministicClock(FIXED_INSTANT);
+    const storage = new TamperingStorage(clock);
+    const k = buildTestKernel({ clock, storage });
     const { missionId } = toImplementation(k);
     k.kernel.setBudgetLimit(missionId, "monetary_cost", 100);
     const request = k.kernel.requestBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 400, requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
     const record = k.kernel.recordApprovalDecisionRaw({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
-    // Mutate the stored request's amount after the record was built.
-    k.kernel.storage.createApprovalRequest({ ...request, budgetTopUp: { resourceClass: "monetary_cost", amount: 500 } });
+    // A non-conforming adapter can return a mutated read; the hash must catch it.
+    storage.tamper = (live) => ({ ...live, budgetTopUp: { resourceClass: "monetary_cost", amount: 500 } });
     expect(() =>
       k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 500, approvalRecordId: record.approvalRecordId }),
     ).toThrow(/STALE_APPROVAL/);
@@ -218,7 +221,7 @@ describe("E. budgets", () => {
     k.kernel.setBudgetLimit(missionId, "model_tokens", 100);
     const stale = k.kernel.ledger(missionId, "model_tokens");
     k.kernel.reserveBudget(missionId, "model_tokens", 10);
-    const attempt = k.kernel.storage.upsertLedger(missionId, "model_tokens", stale.ledgerVersion, { ...stale, reserved: 999 });
+    const attempt = k.storage.upsertLedger(missionId, "model_tokens", stale.ledgerVersion, { ...stale, reserved: 999 });
     expect(attempt.ok).toBe(false);
     if (!attempt.ok) expect(attempt.error.code).toBe("CONCURRENCY_CONFLICT");
   });
@@ -271,8 +274,8 @@ function fakeTopUpApproval(k: ReturnType<typeof buildTestKernel>, missionId: str
     authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
     optionalReason: null,
   };
-  k.kernel.storage.createApprovalRequest(request);
-  k.kernel.storage.recordApprovalDecision(record);
+  k.storage.createApprovalRequest(request);
+  k.storage.recordApprovalDecision(record);
   return record.approvalRecordId;
 }
 

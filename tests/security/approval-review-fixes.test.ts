@@ -14,6 +14,8 @@
 import { describe, expect, it } from "vitest";
 import { buildTestKernel, toPlanGate, toImplementation, FIXED_INSTANT, type TestKernel } from "../../src/testing/builders/test-kernel.js";
 import { approvalSubjectHash } from "../../src/domain/approvals/approval.js";
+import { DeterministicClock } from "../../src/adapters/kernel-adapters.js";
+import { TamperingStorage } from "../support/tampering-storage.js";
 
 /** File a BUDGET_TOPUP approval the way the real machinery does. */
 function topUpApproval(k: TestKernel, missionId: string, decidedBy = "captain"): string {
@@ -46,8 +48,8 @@ function topUpApproval(k: TestKernel, missionId: string, decidedBy = "captain"):
     authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
     optionalReason: null,
   };
-  k.kernel.storage.createApprovalRequest(request);
-  k.kernel.storage.recordApprovalDecision(record);
+  k.storage.createApprovalRequest(request);
+  k.storage.recordApprovalDecision(record);
   return record.approvalRecordId;
 }
 
@@ -65,7 +67,7 @@ describe("R. approval-layer review fixes", () => {
       k.kernel.recordApprovalDecisionRaw({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "craftsman" }),
     ).toThrow(/SELF_APPROVAL_DENIED/);
     // no APPROVED record was stored by the agent identity
-    const stored = k.kernel.storage.getApprovalRecordByRequest(request.approvalRequestId);
+    const stored = k.storage.getApprovalRecordByRequest(request.approvalRequestId);
     expect(stored.ok ? stored.value?.decision : undefined).not.toBe("APPROVED");
   });
 
@@ -86,7 +88,9 @@ describe("R. approval-layer review fixes", () => {
   });
 
   it("R1: a request mutated after the record is refused with STALE_APPROVAL", () => {
-    const k = buildTestKernel();
+    const clock = new DeterministicClock(FIXED_INSTANT);
+    const storage = new TamperingStorage(clock);
+    const k = buildTestKernel({ clock, storage });
     const { missionId, planArtifactId, planSha } = toPlanGate(k);
     const request = k.kernel.requestPlanApproval({
       missionId,
@@ -106,14 +110,10 @@ describe("R. approval-layer review fixes", () => {
       authorityProof: { method: "deterministic-test-authority", reference: "captain-test-key" },
       optionalReason: null,
     };
-    k.kernel.storage.recordApprovalDecision(record);
-    // ...then the stored request's subject changes (artifact content edited)
-    const live = k.kernel.storage.getApprovalRequest(request.approvalRequestId);
-    expect(live.ok).toBe(true);
-    if (live.ok && live.value) {
-      const tampered = { ...live.value, artifactSubjects: [{ ...live.value.artifactSubjects[0], contentSha256: "changed-bytes" }] };
-      k.kernel.storage.createApprovalRequest(tampered);
-    }
+    k.storage.recordApprovalDecision(record);
+    // A conforming store forbids replacement; a non-conforming one can still
+    // return a mutated read, and the hash check must refuse it.
+    storage.tamper = (live) => ({ ...live, artifactSubjects: [{ ...live.artifactSubjects[0], contentSha256: "changed-bytes" }] });
     // the decision must be refused: the live subject no longer matches the record
     expect(() =>
       k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" }),

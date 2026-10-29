@@ -12,6 +12,7 @@ import { InMemoryColonyStorage } from "../adapters/in-memory-storage.js";
 import { DeterministicClock, DeterministicIdGenerator, InMemoryTelemetry } from "../adapters/kernel-adapters.js";
 import { FakeAgentRuntime, type ScriptedResponse } from "../adapters/fake-agent-runtime.js";
 import { approvalSubjectHash } from "../domain/approvals/approval.js";
+import type { ColonyStorage } from "../ports/storage.js";
 import { applyEvent } from "../domain/events/apply-event.js";
 import { initialMissionState } from "../domain/mission/mission-state.js";
 
@@ -30,8 +31,9 @@ export interface DemoOutput {
 export function runDemo(seed: string): DemoOutput {
   const fixedInstant = new Date(Date.UTC(2026, 8, 17, 12, 0, 0)); // fixed clock (mission §12)
   const clock = new DeterministicClock(fixedInstant);
+  const storage = new InMemoryColonyStorage(clock);
   const kernel = new ColonyKernel({
-    storage: new InMemoryColonyStorage(clock),
+    storage,
     clock,
     ids: new DeterministicIdGenerator(seed),
     telemetry: new InMemoryTelemetry(),
@@ -170,7 +172,8 @@ export function runDemo(seed: string): DemoOutput {
   kernel.completeFinalPolicyGate(missionId, "allowed");
 
   // Gate 2: PACKAGE_APPROVAL. No public action follows (A33).
-  const artifacts = kernel.storage.listArtifacts(missionId);
+  const port: ColonyStorage = storage;
+  const artifacts = port.listArtifacts(missionId);
   if (!artifacts.ok) throw artifacts.error;
   const packageSubjects = artifacts.value.map((a) => ({
     artifactId: a.artifactId,

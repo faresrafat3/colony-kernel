@@ -6,6 +6,7 @@ import { DeterministicClock, DeterministicIdGenerator, InMemoryTelemetry } from 
 import { FakeAgentRuntime, type ScriptedResponse } from "../../adapters/fake-agent-runtime.js";
 import type { ApprovalRequest } from "../../domain/approvals/approval.js";
 import type { RoleRegistry } from "../../domain/capabilities/registry.js";
+import type { ColonyStorage } from "../../ports/storage.js";
 
 export const FIXED_INSTANT = new Date(Date.UTC(2026, 8, 17, 12, 0, 0));
 export const TEST_SEED = "colony-kernel-test-seed";
@@ -17,9 +18,9 @@ export interface TestKernel {
   runtime: FakeAgentRuntime;
 }
 
-export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: string; clock?: Clock; roles?: RoleRegistry }): TestKernel {
+export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: string; clock?: Clock; roles?: RoleRegistry; storage?: InMemoryColonyStorage }): TestKernel {
   const clock = options?.clock ?? new DeterministicClock(FIXED_INSTANT);
-  const storage = new InMemoryColonyStorage(clock);
+  const storage = options?.storage ?? new InMemoryColonyStorage(clock);
   const telemetry = new InMemoryTelemetry();
   const runtime = new FakeAgentRuntime(options?.script ?? []);
   const kernel = new ColonyKernel({
@@ -122,7 +123,8 @@ export function toPackageGate(k: TestKernel): { missionId: string; request: Appr
   const { missionId } = toPublishGate(k);
   // Read through the port, not the concrete adapter: only the port declares the
   // failure branch, and a test kit must exercise the shape callers really see.
-  const artifacts = k.kernel.storage.listArtifacts(missionId);
+  const port: ColonyStorage = k.storage;
+  const artifacts = port.listArtifacts(missionId);
   if (!artifacts.ok) throw artifacts.error;
   const request = kernel.requestPackageApproval({
     missionId,

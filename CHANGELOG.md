@@ -44,6 +44,12 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   different class/amount (`INVALID_PURPOSE`), a mutated request
   (`STALE_APPROVAL`) or an expired one (`EXPIRED_AT_COMMIT`). The optional
   field is documented in `docs/SPEC_DEVIATIONS.md` §8. Tests 162 → 165.
+- The kernel's storage handle is private: a host keeps the instance it injected
+  for reads, but the kernel no longer exposes raw writers (`appendEvent`,
+  `recordApprovalDecision`, `createApprovalRequest`) to every holder. Stored
+  approval requests are immutable: a duplicate id with different bytes is
+  `APPROVAL_CONFLICT`, identical bytes are an idempotent replay. Tests
+  165 → 166.
 
 ### Added
 

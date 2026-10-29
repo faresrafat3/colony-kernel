@@ -56,7 +56,10 @@ export interface KernelServices {
 const HUMAN_AUTHORITY = "captain";
 
 export class ColonyKernel {
-  readonly storage: ColonyStorage;
+  // Private on purpose: the host keeps the instance it injected for reads, but
+  // the kernel must not hand out raw writers (appendEvent, recordApprovalDecision,
+  // createApprovalRequest) that bypass every guard.
+  private readonly storage: ColonyStorage;
   readonly clock: Clock;
   readonly ids: IdGenerator;
   readonly telemetry: TelemetrySink;
