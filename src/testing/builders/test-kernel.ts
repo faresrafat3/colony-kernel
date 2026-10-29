@@ -1,7 +1,7 @@
 /** Shared deterministic test kit: kernel builder + role/mission fixtures. */
 import { ColonyKernel } from "../../application/colony-kernel.js";
 import { InMemoryColonyStorage } from "../../adapters/in-memory-storage.js";
-import type { SteppingClock } from "../../adapters/kernel-adapters.js";
+import type { Clock } from "../../ports/kernel-ports.js";
 import { DeterministicClock, DeterministicIdGenerator, InMemoryTelemetry } from "../../adapters/kernel-adapters.js";
 import { FakeAgentRuntime, type ScriptedResponse } from "../../adapters/fake-agent-runtime.js";
 import type { ApprovalRequest } from "../../domain/approvals/approval.js";
@@ -17,13 +17,14 @@ export interface TestKernel {
   runtime: FakeAgentRuntime;
 }
 
-export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: string; clock?: SteppingClock; roles?: RoleRegistry }): TestKernel {
-  const storage = new InMemoryColonyStorage();
+export function buildTestKernel(options?: { script?: ScriptedResponse[]; seed?: string; clock?: Clock; roles?: RoleRegistry }): TestKernel {
+  const clock = options?.clock ?? new DeterministicClock(FIXED_INSTANT);
+  const storage = new InMemoryColonyStorage(clock);
   const telemetry = new InMemoryTelemetry();
   const runtime = new FakeAgentRuntime(options?.script ?? []);
   const kernel = new ColonyKernel({
     storage,
-    clock: options?.clock ?? new DeterministicClock(FIXED_INSTANT),
+    clock,
     ids: new DeterministicIdGenerator(options?.seed ?? TEST_SEED),
     telemetry,
     runtime,

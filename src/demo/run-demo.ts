@@ -29,9 +29,10 @@ export interface DemoOutput {
 
 export function runDemo(seed: string): DemoOutput {
   const fixedInstant = new Date(Date.UTC(2026, 8, 17, 12, 0, 0)); // fixed clock (mission §12)
+  const clock = new DeterministicClock(fixedInstant);
   const kernel = new ColonyKernel({
-    storage: new InMemoryColonyStorage(),
-    clock: new DeterministicClock(fixedInstant),
+    storage: new InMemoryColonyStorage(clock),
+    clock,
     ids: new DeterministicIdGenerator(seed),
     telemetry: new InMemoryTelemetry(),
     runtime: new FakeAgentRuntime(demoScript()),

@@ -124,5 +124,18 @@ describe("I. isolation model", () => {
     expect(k.kernel.storage.releaseLease("mission-writer").ok).toBe(true);
     expect(k.kernel.storage.acquireLease("mission-writer", { expiresAt: new Date(FIXED_INSTANT.getTime() + 60_000).toISOString() }).ok).toBe(true);
   });
+
+  it("I-05: an expired lease frees the name; an unparseable ttl is refused", () => {
+    let now = FIXED_INSTANT.getTime();
+    const k = buildTestKernel({ clock: { now: () => new Date(now) } });
+    const ttl = (at: number) => ({ expiresAt: new Date(at).toISOString() });
+    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
+    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(false);
+    now += 60_000; // at the expiry instant the lease is already free
+    expect(k.kernel.storage.acquireLease("writer", ttl(now + 60_000)).ok).toBe(true);
+    const bad = k.kernel.storage.acquireLease("writer", { expiresAt: "not-a-date" });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.error.code).toBe("INVALID_SCHEMA");
+  });
 });
 

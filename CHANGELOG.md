@@ -20,6 +20,10 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   agent past the human gate. A role can finalize only the artifact types its
   capabilities produce. Top-up amounts must be positive integers and the ledger
   invariants are asserted on every top-up. Tests 150 → 157.
+- Storage leases honor their TTL: an expired lease no longer blocks the name,
+  and an unparseable `expiresAt` is refused at acquisition. The in-memory
+  adapter takes the injected clock (N6/N7), so lease time is never ambient.
+  Tests 157 → 158.
 
 ### Added
 

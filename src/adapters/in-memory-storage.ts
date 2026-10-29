@@ -8,6 +8,7 @@
 import { KernelError } from "../domain/errors/kernel-error.js";
 import { initialMissionState } from "../domain/mission/mission-state.js";
 import type { ColonyStorage, StorageTransaction } from "../ports/storage.js";
+import type { Clock } from "../ports/kernel-ports.js";
 import type { EventEnvelope } from "../domain/events/envelope.js";
 import type { MissionState } from "../domain/mission/mission-state.js";
 import type { ArtifactManifest } from "../domain/artifacts/artifact.js";
@@ -23,8 +24,7 @@ interface RejectionRecord {
 }
 
 export class InMemoryColonyStorage implements ColonyStorage {
-  private readonly states = new Map<string, MissionState>();
-  private readonly events = new Map<string, EventEnvelope>(); // by eventId
+  private readonly states = new Map<string, MissionState>();  private readonly events = new Map<string, EventEnvelope>(); // by eventId
   private readonly eventsByMission = new Map<string, EventEnvelope[]>();
   private readonly sequences = new Map<string, string>(); // (missionId|seq) -> eventId
   private readonly idempotency = new Map<string, string>(); // key -> eventId
@@ -36,6 +36,9 @@ export class InMemoryColonyStorage implements ColonyStorage {
   private readonly ledgers = new Map<string, BudgetLedger>(); // (missionId|class) -> ledger
   private readonly leases = new Map<string, { expiresAt: string }>();
   private readonly rejections: RejectionRecord[] = [];
+
+  /** Same injected clock as the kernel: lease TTL is judged, never ambient (N6/N7). */
+  constructor(private readonly clock: Clock) {}
 
   beginTransaction(): { ok: true; value: StorageTransaction } | { ok: false; error: KernelError } {
     // M1A storage is single-threaded; a transaction is a staged checkpoint of
@@ -270,8 +273,13 @@ export class InMemoryColonyStorage implements ColonyStorage {
   }
 
   acquireLease(name: string, ttl: { expiresAt: string }): { ok: true; value: void } | { ok: false; error: KernelError } {
+    const expiry = Date.parse(ttl.expiresAt);
+    if (!Number.isFinite(expiry)) {
+      return { ok: false, error: new KernelError("INVALID_SCHEMA", "lease expiresAt must be an ISO timestamp", { expiresAt: ttl.expiresAt }) };
+    }
     const existing = this.leases.get(name);
-    if (existing !== undefined) {
+    // An expired lease no longer holds the name; at the boundary instant it is free (N7).
+    if (existing !== undefined && Date.parse(existing.expiresAt) > this.clock.now().getTime()) {
       return { ok: false, error: new KernelError("LEASE_CONFLICT", `lease ${name} already held`, {}) };
     }
     this.leases.set(name, { ...ttl });
