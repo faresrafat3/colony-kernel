@@ -109,7 +109,7 @@ all three omissions by inspecting the actual prompt string.
 ## Verification
 
 ```
-npm run verify                       # 135 tests, ALL GATES GREEN
+npm run verify                       # 150 tests, ALL GATES GREEN
 npx vitest run tests/adapters/hermes-agent-runtime.test.ts   # 37 tests
 ```
 

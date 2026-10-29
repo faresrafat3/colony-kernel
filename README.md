@@ -55,7 +55,8 @@ src/domain/        pure: no I/O, no platform globals, no clocks, no randomness
   support/         pure TypeScript SHA-256 (no node:crypto)
 src/application/   ColonyKernel — command/query seam; legality precedes storage
 src/ports/         colony-owned interfaces (storage, runtime, clock, ids, telemetry)
-src/adapters/      in-memory storage, fake runtime, deterministic clock/ids
+src/adapters/      in-memory storage, fake runtime, deterministic clock/ids,
+                   Hermes host adapter (scripted default; live not wired)
 src/demo/          seeded deterministic demo mission
 tests/             transitions / contracts / security / recovery / unit
 docs/              normative spec v0.1.1 + architecture + traceability + status
@@ -66,7 +67,7 @@ On layering: `domain/**` imports nothing outside `domain/**`, `application` may 
 
 ## Honest coverage label
 
-Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memory storage, injected clocks. It is not native-runtime, isolated-runner, or live-role evidence. Deferred: durable storage adapter, tool-invocation crash matrix, migration execution, filesystem workspace isolation, DSH adapter. See `docs/IMPLEMENTATION_STATUS.md` and `docs/TEST_TRACEABILITY.md`.
+Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memory storage, injected clocks. It is not native-runtime, isolated-runner, or live-role evidence. A 1B `HermesAgentRuntime` proves the runtime port is host-agnostic; its scripted mode is the default and its live mode is opt-in and not wired to a runtime path. Deferred: durable storage adapter, tool-invocation crash matrix, migration execution, filesystem workspace isolation, DSH adapter. See `docs/IMPLEMENTATION_STATUS.md` and `docs/TEST_TRACEABILITY.md`.
 
 ## Documentation
 
@@ -76,7 +77,7 @@ Everything in 1A is **simulated deterministic coverage**: fake runtime, in-memor
 | `docs/colony-kernel-v0.1-to-v0.1.1-delta.md` | Structural delta between the two normative versions |
 | `docs/ARCHITECTURE.md` | Layering rules and control flow of one command |
 | `docs/IMPLEMENTATION_STATUS.md` | What is implemented vs deferred, with actual gate results |
-| `docs/TEST_TRACEABILITY.md` | 66 originally-ran tests + the 81 added since (147 total) |
+| `docs/TEST_TRACEABILITY.md` | M1A traceability record (a snapshot; the live count is `npm test`) |
 | `docs/SPEC_DEVIATIONS.md` | Scoping decisions, none normative-weakening |
 | `GLOSSARY.md` | The words this project means: 52 terms, each with an Avoid list |
 | `docs/adr/` | Decision records for the choices the normative spec relies on |
