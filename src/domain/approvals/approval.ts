@@ -93,9 +93,21 @@ export function approvalSubjectHash(request: ApprovalRequest): string {
  * injected registry's `roleIds()`, which can never be empty (`RoleRegistry`
  * refuses to be built without roles) and always names the roles the kernel
  * actually knows.
+ *
+ * A deny-list alone still treats every string it does not recognise as a human.
+ * When the caller knows the authority the request was issued for, pass
+ * `requiredAuthority` too: the decision must then match it exactly, so a padded,
+ * re-cased or unknown agent id cannot pass (2026-10-29).
  */
-export function isHumanAuthority(decidedBy: string, agentRoleIds: readonly string[]): boolean {
-  return !agentRoleIds.includes(decidedBy);
+export function isHumanAuthority(
+  decidedBy: string,
+  agentRoleIds: readonly string[],
+  requiredAuthority?: string,
+): boolean {
+  return (
+    !agentRoleIds.includes(decidedBy) &&
+    (requiredAuthority === undefined || decidedBy === requiredAuthority)
+  );
 }
 
 /** Deterministic expiry check against the injected persistence clock. */

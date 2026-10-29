@@ -70,6 +70,20 @@ describe("F1. human-authority precondition", () => {
     expect(k.kernel.getMission(missionId)?.stage).toBe("IMPLEMENTATION");
   });
 
+  it("an identity that is not exactly the required authority is refused", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const request = planApprovalRequest(k, missionId, planArtifactId, planSha);
+    // None of these is on the agent deny-list, so the deny-list alone would pass
+    // them; none is the authority the request names, so the exact match refuses.
+    for (const decidedBy of ["first-mate ", "First-Mate", "hermes-agent"]) {
+      expect(() =>
+        k.kernel.recordApprovalDecision({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy }),
+      ).toThrow(/SELF_APPROVAL_DENIED/);
+    }
+    expect(k.kernel.getMission(missionId)?.stage).toBe("AWAITING_PLAN_APPROVAL");
+  });
+
   it("the documented sharp edge stays documented: an empty list accepts every identity", () => {
     // The precondition is the caller's to hold; this pins the contract the
     // review recorded, so it cannot be forgotten silently.

@@ -59,6 +59,20 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   redacts to the end), AWS/GitHub/Anthropic/Slack/Google token shapes and
   `client_secret` assignments, with an optional `secretPatterns` override. The
   recorded hash and byte count describe the redacted text. Tests 167 → 169.
+- A rejection that asks for no change closes the mission (E12 at the plan gate,
+  E27 at the package gate). The decision path used to emit only
+  `APPROVAL_RECORDED`, which has no exit for a plain "no", so a legitimate
+  rejection threw `ILLEGAL_TRANSITION` with the mission left at the gate. The
+  durable `REJECTED` record is still written and stays unconsumed.
+- The approver check requires the exact authority the request names:
+  `isHumanAuthority(decidedBy, agentRoleIds, requiredAuthority)` still refuses
+  every agent role, and now also refuses an identity that is not
+  `requiredHumanAuthority` — a padded (`"first-mate "`), re-cased or unknown id
+  no longer passes as human. Applied at both decision seams and the resume seam.
+- `canonicalJson` refuses `undefined`, function, symbol and bigint values
+  instead of collapsing them to `{}`. Two different payloads could share one
+  canonical form, and therefore one `payloadSha256` / `approvalSubjectHash`, by
+  passing a value JSON cannot represent. Tests 169 → 172.
 
 ### Added
 

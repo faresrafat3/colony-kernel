@@ -472,8 +472,10 @@ export class ColonyKernel {
   recordApprovalDecision(input: { approvalRequestId: string; decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string; requestedChange?: boolean }): ApprovalRecord {
     const request = unwrap(this.storage.getApprovalRequest(input.approvalRequestId));
     if (request === undefined) throw new KernelError("APPROVAL_NOT_FOUND", `approval ${input.approvalRequestId} not found`, {});
-    if (!isHumanAuthority(input.decidedBy, this.roles.roleIds())) {
-      throw new KernelError("SELF_APPROVAL_DENIED", `agent identity ${input.decidedBy} cannot approve`, { decidedBy: input.decidedBy });
+    if (
+      !isHumanAuthority(input.decidedBy, this.roles.roleIds(), request.requiredHumanAuthority)
+    ) {
+      throw new KernelError("SELF_APPROVAL_DENIED", `identity ${input.decidedBy} is not the required human authority ${request.requiredHumanAuthority}`, { decidedBy: input.decidedBy });
     }
     // N1 reqs 5-7 / A05: if an APPROVED record already exists, the live request
     // must still match it. A request mutated after the record was built (artifact
@@ -511,7 +513,13 @@ export class ColonyKernel {
     const record = this.buildApprovalRecord(request, input);
     unwrap(this.storage.recordApprovalDecision(record));
     const envelope = this.envelope(
-      ET.APPROVAL_RECORDED,
+      // E12/E27: a rejection that asks for no change ends the mission. The edge
+      // table's exit for that decision is MISSION_CLOSED (matched on
+      // decision=REJECTED); APPROVAL_RECORDED has no such exit, so a plain "no"
+      // used to throw ILLEGAL_TRANSITION and leave the mission at the gate.
+      record.decision === "REJECTED" && input.requestedChange !== true
+        ? ET.MISSION_CLOSED
+        : ET.APPROVAL_RECORDED,
       state,
       this.actorFor(null, "CAPTAIN_TRANSPORT", input.decidedBy),
       {
@@ -595,8 +603,10 @@ export class ColonyKernel {
   recordApprovalDecisionRaw(input: { approvalRequestId: string; decision: "APPROVED" | "REJECTED"; decidedBy: string; reason?: string }): ApprovalRecord {
     const request = unwrap(this.storage.getApprovalRequest(input.approvalRequestId));
     if (request === undefined) throw new KernelError("APPROVAL_NOT_FOUND", `approval ${input.approvalRequestId} not found`, {});
-    if (!isHumanAuthority(input.decidedBy, this.roles.roleIds())) {
-      throw new KernelError("SELF_APPROVAL_DENIED", `agent identity ${input.decidedBy} cannot approve`, { decidedBy: input.decidedBy });
+    if (
+      !isHumanAuthority(input.decidedBy, this.roles.roleIds(), request.requiredHumanAuthority)
+    ) {
+      throw new KernelError("SELF_APPROVAL_DENIED", `identity ${input.decidedBy} is not the required human authority ${request.requiredHumanAuthority}`, { decidedBy: input.decidedBy });
     }
     const record = this.buildApprovalRecord(request, input);
     const stored = this.storage.recordApprovalDecision(record);
@@ -900,7 +910,7 @@ export class ColonyKernel {
   }
 
   resumeFromHumanReview(missionId: string, decidedBy: string, newEvidence: string): MissionState {
-    if (!isHumanAuthority(decidedBy, this.roles.roleIds())) {
+    if (!isHumanAuthority(decidedBy, this.roles.roleIds(), HUMAN_AUTHORITY)) {
       throw new KernelError("SELF_APPROVAL_DENIED", "resume requires a human authority", {});
     }
     return this.commit(missionId, (state) => ({

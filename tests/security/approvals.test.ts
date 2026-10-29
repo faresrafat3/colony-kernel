@@ -1,6 +1,6 @@
 /** C. Approvals: exact binding, staleness, expiry, replay, purpose, self-approval. */
 import { describe, expect, it } from "vitest";
-import { buildTestKernel, toPlanGate, driveToPublishGate, FIXED_INSTANT, type TestKernel } from "../../src/testing/builders/test-kernel.js";
+import { buildTestKernel, toPlanGate, toPackageGate, driveToPublishGate, FIXED_INSTANT, type TestKernel } from "../../src/testing/builders/test-kernel.js";
 import { SteppingClock } from "../../src/adapters/kernel-adapters.js";
 void SteppingClock;
 import { approvalSubjectHash, sortArtifactSubjects } from "../../src/domain/approvals/approval.js";
@@ -230,6 +230,32 @@ describe("C. approvals", () => {
     if (!conflict.ok) expect(conflict.error.code).toBe("APPROVAL_CONFLICT");
     // identical bytes are an idempotent replay
     expect(k.storage.createApprovalRequest(request).ok).toBe(true);
+  });
+it("C-17: a rejection without a change request closes the mission (E12)", () => {
+    const k = buildTestKernel();
+    const { missionId, planArtifactId, planSha } = toPlanGate(k);
+    const request = gateRequest(k, missionId, planArtifactId, planSha);
+    const record = k.kernel.recordApprovalDecision({
+      approvalRequestId: request.approvalRequestId,
+      decision: "REJECTED",
+      decidedBy: "captain",
+    });
+    expect(record.decision).toBe("REJECTED");
+    expect(k.kernel.getMission(missionId)?.stage).toBe("CLOSED");
+    expect(k.kernel.getEvents(missionId).at(-1)?.eventType).toBe("MISSION_CLOSED");
+    // the decision stays auditable and is never consumed
+    expect(k.storage.isApprovalConsumed(record.approvalRecordId)).toBe(false);
+  });
+
+  it("C-18: a rejection without a change request closes at the package gate (E27)", () => {
+    const k = buildTestKernel();
+    const { missionId, request } = toPackageGate(k);
+    k.kernel.recordApprovalDecision({
+      approvalRequestId: request.approvalRequestId,
+      decision: "REJECTED",
+      decidedBy: "captain",
+    });
+    expect(k.kernel.getMission(missionId)?.stage).toBe("CLOSED");
   });
 });
 

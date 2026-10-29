@@ -38,8 +38,14 @@ function assertCanonicallySerializable(value: unknown): asserts value is Json {
       }
       return;
     }
+    case "string":
+    case "boolean":
+      return;
     default:
-      return; // string | boolean | null
+      // undefined, function, symbol, bigint: JSON has no form for these. Silent
+      // acceptance would collapse them to {} (Object.keys(fn) is []) and let two
+      // different payloads share one hash.
+      throw new CanonicalizationError(`unsupported value of type ${typeof value}`);
   }
 }
 

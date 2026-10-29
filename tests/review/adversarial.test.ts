@@ -134,6 +134,12 @@ describe("A2 — content-addressed approval cannot be re-pointed", () => {
     // A silent fallback here would let two different payloads share a hash.
     expect(() => canonicalJson({ x: Number.NaN })).toThrow();
     expect(() => canonicalJson({ x: undefined as unknown as string })).toThrow();
+    // A function/symbol/bigint field used to serialize as {} — the same bytes as
+    // a genuinely empty object. Each must fail loud instead.
+    expect(() => canonicalJson({ x: Symbol("s") as unknown as string })).toThrow();
+    expect(() => canonicalJson({ x: 1n as unknown as string })).toThrow();
+    expect(() => canonicalJson({ x: (() => undefined) as unknown as string })).toThrow();
+    expect(canonicalJson({ x: {} })).toBe('{"x":{}}');
   });
 });
 
