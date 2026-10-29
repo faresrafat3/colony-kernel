@@ -37,7 +37,7 @@ Multi-agent frameworks (orchestrators, graphs, crews) let the LLM drive workflow
 npm install
 npm run typecheck   # strict TypeScript, no emit
 npm run lint        # eslint (typescript-eslint flat config)
-npm run test        # vitest — 174 deterministic offline tests
+npm run test        # vitest — 176 deterministic offline tests
 npm run demo        # seeded deterministic demo mission; two runs are byte-identical
 ```
 
