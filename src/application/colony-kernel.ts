@@ -22,6 +22,7 @@ import type {
   ApprovalRequest,
   ApprovalRecord,
   ApprovalPurpose,
+  ActionClass,
   ArtifactSubjectRef,
 } from "../domain/approvals/approval.js";
 import { approvalSubjectHash, isHumanAuthority, isExpiredAtCommit, sortArtifactSubjects } from "../domain/approvals/approval.js";
@@ -310,6 +311,7 @@ export class ColonyKernel {
     input: { artifactSubjects: readonly ArtifactSubjectRef[]; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number },
     purpose: ApprovalPurpose,
     toState: string,
+    options?: { actionClass?: ActionClass; budgetTopUp?: { resourceClass: ResourceClass; amount: number } },
   ): { request: ApprovalRequest; envelope: EventEnvelope } {
     const request: ApprovalRequest = {
       schemaVersion: 1,
@@ -318,7 +320,8 @@ export class ColonyKernel {
       missionStateVersion: state.stateVersion,
       requestedTransition: { fromState: state.stage, toState },
       approvalPurpose: purpose,
-      actionClass: "LOCAL_WRITE",
+      actionClass: options?.actionClass ?? "LOCAL_WRITE",
+      ...(options?.budgetTopUp === undefined ? {} : { budgetTopUp: options.budgetTopUp }),
       requestedByRole: input.requestedByRole,
       requiredHumanAuthority: HUMAN_AUTHORITY,
       artifactSubjects: sortArtifactSubjects(input.artifactSubjects),
@@ -730,6 +733,31 @@ export class ColonyKernel {
   }
 
   /** Top-up requires a consumed BUDGET_TOPUP ApprovalRecord (N4 req 3, 11). */
+  /**
+   * Request a human top-up approval with its terms (N4 reqs 3/11). A top-up is
+   * an approval artifact, not a state transition: N10 has no APPROVAL_REQUESTED
+   * edge outside the two gates, so the request row is stored and the
+   * BUDGET_TOPUP_APPROVED event records the consumption. The terms live inside
+   * the content-addressed request, so the approval hash binds the class/amount.
+   */
+  requestBudgetTopUp(input: { missionId: string; resourceClass: ResourceClass; amount: number; requestedByRole: { roleId: string; roleVersion: number }; ttlMs: number }): ApprovalRequest {
+    const state = this.current(input.missionId);
+    if (TOPUP_FORBIDDEN_CLASSES.has(input.resourceClass) || !TOPUP_ALLOWED_CLASSES.has(input.resourceClass)) {
+      throw new KernelError("TOPUP_FORBIDDEN", `resource class ${input.resourceClass} cannot be topped up`, {});
+    }
+    if (!Number.isInteger(input.amount) || input.amount <= 0) {
+      throw new KernelError("INVALID_SCHEMA", "top-up amount must be a positive integer", { amount: input.amount });
+    }
+    this.roles.role(input.requestedByRole.roleId); // unknown requester fails closed
+    const { request } = this.openApprovalRequest(state, { ...input, artifactSubjects: [] }, "BUDGET_TOPUP", state.stage, {
+      actionClass: "BUDGET",
+      budgetTopUp: { resourceClass: input.resourceClass, amount: input.amount },
+    });
+    unwrap(this.storage.createApprovalRequest(request));
+    this.noteApprovalRequested(input.missionId, request);
+    return request;
+  }
+
   applyBudgetTopUp(input: { missionId: string; resourceClass: ResourceClass; amount: number; approvalRecordId: string }): BudgetLedger {
     if (TOPUP_FORBIDDEN_CLASSES.has(input.resourceClass)) {
       throw new KernelError("TOPUP_FORBIDDEN", `resource class ${input.resourceClass} cannot be topped up`, {});
@@ -744,6 +772,31 @@ export class ColonyKernel {
     const request = unwrap(this.storage.getApprovalRequest(record.approvalRequestId));
     if (request === undefined || request.approvalPurpose !== "BUDGET_TOPUP" || request.missionId !== input.missionId) {
       throw new KernelError("INVALID_PURPOSE", "top-up approval purpose/mission mismatch", {});
+    }
+    // The approval authorizes exactly the terms the human was shown. Without
+    // this check one approval moved any amount on any allowed class.
+    const terms = request.budgetTopUp;
+    if (terms === undefined || terms.resourceClass !== input.resourceClass || terms.amount !== input.amount) {
+      throw new KernelError("INVALID_PURPOSE", `approval ${record.approvalRecordId} does not authorize this top-up`, {
+        approved: terms ?? null,
+        requested: { resourceClass: input.resourceClass, amount: input.amount },
+      });
+    }
+    // A05 / N1 req 8: the record must still describe the live request, and the
+    // approval must be live at the moment of consumption.
+    const liveHash = approvalSubjectHash(request);
+    if (liveHash !== record.approvalSubjectHash) {
+      throw new KernelError("STALE_APPROVAL", `approval ${record.approvalRecordId} subject changed since the record was built`, {
+        approvalRecordId: record.approvalRecordId,
+        recordedHash: record.approvalSubjectHash,
+        currentHash: liveHash,
+      });
+    }
+    if (isExpiredAtCommit(request, this.clock.now())) {
+      throw new KernelError("EXPIRED_AT_COMMIT", `approval ${record.approvalRecordId} expired at commit`, {
+        approvalRecordId: record.approvalRecordId,
+        expiresAt: request.expiresAt,
+      });
     }
     const ledger = this.ledger(input.missionId, input.resourceClass);
     const next = applyTopUp(ledger, {

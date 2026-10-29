@@ -39,6 +39,11 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   first, then a durable `APPROVAL_EXPIRED` event moves it to
   `HUMAN_REVIEW_REQUIRED`, and a human resume re-enters the gate for a bounded
   reissue. Tests 161 → 162.
+- Top-up approvals bind their terms: `requestBudgetTopUp` records the class and
+  amount inside the content-addressed request, and `applyBudgetTopUp` refuses a
+  different class/amount (`INVALID_PURPOSE`), a mutated request
+  (`STALE_APPROVAL`) or an expired one (`EXPIRED_AT_COMMIT`). The optional
+  field is documented in `docs/SPEC_DEVIATIONS.md` §8. Tests 162 → 165.
 
 ### Added
 

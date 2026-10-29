@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildTestKernel, toImplementation, FIXED_INSTANT } from "../../src/testing/builders/test-kernel.js";
 import { canonicalArtifactContent } from "../../src/domain/artifacts/artifact.js";
 import { sha256Hex } from "../../src/domain/support/sha256.js";
+import type { ResourceClass } from "../../src/domain/budgets/ledger.js";
 
 describe("D. artifacts", () => {
   it("D-01: finalized artifact is content-addressed (sha256 over canonical bytes)", () => {
@@ -109,7 +110,7 @@ describe("E. budgets", () => {
     // Approve a top-up through the normal approval machinery (purpose BUDGET_TOPUP).
     const state = k.kernel.getMission(missionId);
     void state;
-    const record = fakeTopUpApproval(k, missionId);
+    const record = fakeTopUpApproval(k, missionId, "monetary_cost", 400);
     k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 400, approvalRecordId: record });
     expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(500);
     expect(k.kernel.ledger(missionId, "monetary_cost").spent).toBe(60);
@@ -128,7 +129,7 @@ describe("E. budgets", () => {
     const k = buildTestKernel();
     const { missionId } = toImplementation(k);
     k.kernel.setBudgetLimit(missionId, "revision_cycles", 2);
-    const record = fakeTopUpApproval(k, missionId);
+    const record = fakeTopUpApproval(k, missionId, "revision_cycles", 5);
     expect(() =>
       k.kernel.applyBudgetTopUp({ missionId, resourceClass: "revision_cycles", amount: 5, approvalRecordId: record }),
     ).toThrow(/TOPUP_FORBIDDEN/);
@@ -138,14 +139,68 @@ describe("E. budgets", () => {
     const k = buildTestKernel();
     const { missionId } = toImplementation(k);
     k.kernel.setBudgetLimit(missionId, "monetary_cost", 100);
-    const record = fakeTopUpApproval(k, missionId);
     for (const amount of [-100, 0, 1.5]) {
+      const record = fakeTopUpApproval(k, missionId, "monetary_cost", amount);
       expect(() =>
         k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount, approvalRecordId: record }),
       ).toThrow(/INVALID_SCHEMA/);
+      expect(k.storage.isApprovalConsumed(record)).toBe(false);
     }
     expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(100);
-    expect(k.storage.isApprovalConsumed(record)).toBe(false);
+  });
+
+  it("E-10: a top-up request binds its class and amount to the approval", () => {
+    const k = buildTestKernel();
+    const { missionId } = toImplementation(k);
+    k.kernel.setBudgetLimit(missionId, "monetary_cost", 100);
+    const eventsBefore = k.kernel.getEvents(missionId).length;
+    const request = k.kernel.requestBudgetTopUp({
+      missionId,
+      resourceClass: "monetary_cost",
+      amount: 400,
+      requestedByRole: { roleId: "first-mate", roleVersion: 1 },
+      ttlMs: 60_000,
+    });
+    expect(request.budgetTopUp).toEqual({ resourceClass: "monetary_cost", amount: 400 });
+    expect(request.actionClass).toBe("BUDGET");
+    // A top-up request is an approval artifact, not a state transition.
+    expect(k.kernel.getEvents(missionId)).toHaveLength(eventsBefore);
+    const record = k.kernel.recordApprovalDecisionRaw({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    expect(() =>
+      k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 401, approvalRecordId: record.approvalRecordId }),
+    ).toThrow(/INVALID_PURPOSE/);
+    expect(() =>
+      k.kernel.applyBudgetTopUp({ missionId, resourceClass: "tool_calls", amount: 400, approvalRecordId: record.approvalRecordId }),
+    ).toThrow(/INVALID_PURPOSE/);
+    k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 400, approvalRecordId: record.approvalRecordId });
+    expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(500);
+  });
+
+  it("E-11: an expired top-up approval cannot be consumed", () => {
+    const k = buildTestKernel();
+    const { missionId } = toImplementation(k);
+    k.kernel.setBudgetLimit(missionId, "monetary_cost", 100);
+    const request = k.kernel.requestBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 400, requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: -1 });
+    const record = k.kernel.recordApprovalDecisionRaw({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    expect(() =>
+      k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 400, approvalRecordId: record.approvalRecordId }),
+    ).toThrow(/EXPIRED_AT_COMMIT/);
+    expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(100);
+    expect(k.storage.isApprovalConsumed(record.approvalRecordId)).toBe(false);
+  });
+
+  it("E-12: a top-up request mutated after the record is refused", () => {
+    const k = buildTestKernel();
+    const { missionId } = toImplementation(k);
+    k.kernel.setBudgetLimit(missionId, "monetary_cost", 100);
+    const request = k.kernel.requestBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 400, requestedByRole: { roleId: "first-mate", roleVersion: 1 }, ttlMs: 60_000 });
+    const record = k.kernel.recordApprovalDecisionRaw({ approvalRequestId: request.approvalRequestId, decision: "APPROVED", decidedBy: "captain" });
+    // Mutate the stored request's amount after the record was built.
+    k.kernel.storage.createApprovalRequest({ ...request, budgetTopUp: { resourceClass: "monetary_cost", amount: 500 } });
+    expect(() =>
+      k.kernel.applyBudgetTopUp({ missionId, resourceClass: "monetary_cost", amount: 500, approvalRecordId: record.approvalRecordId }),
+    ).toThrow(/STALE_APPROVAL/);
+    expect(k.kernel.getLedgerView(missionId, "monetary_cost").effectiveLimit).toBe(100);
   });
 
   it("E-07: hard exhaustion blocks further execution", () => {
@@ -185,7 +240,7 @@ describe("E. budgets", () => {
 });
 
 /** Deterministic fake BUDGET_TOPUP approval seeded directly into storage. */
-function fakeTopUpApproval(k: ReturnType<typeof buildTestKernel>, missionId: string): string {
+function fakeTopUpApproval(k: ReturnType<typeof buildTestKernel>, missionId: string, resourceClass: ResourceClass, amount: number): string {
   const request = {
     schemaVersion: 1 as const,
     approvalRequestId: k.kernel.ids.nextUuid(),
@@ -194,6 +249,7 @@ function fakeTopUpApproval(k: ReturnType<typeof buildTestKernel>, missionId: str
     requestedTransition: { fromState: "IMPLEMENTATION", toState: "IMPLEMENTATION" },
     approvalPurpose: "BUDGET_TOPUP" as const,
     actionClass: "BUDGET" as const,
+    budgetTopUp: { resourceClass, amount },
     requestedByRole: { roleId: "first-mate", roleVersion: 1 },
     requiredHumanAuthority: "captain",
     artifactSubjects: [],

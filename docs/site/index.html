@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Colony Kernel: Models propose. Only the kernel commits.</title>
-<meta name="description" content="Deterministic mission control for AI agent colonies: 162 offline tests, 1 pinned runtime dependency, byte-identical replay. Your agents can't lie about passing QA.">
+<meta name="description" content="Deterministic mission control for AI agent colonies: 165 offline tests, 1 pinned runtime dependency, byte-identical replay. Your agents can't lie about passing QA.">
 <meta property="og:title" content="Colony Kernel: Models propose. Only the kernel commits.">
-<meta property="og:description" content="Deterministic mission control for AI agent colonies: 162 offline tests, 1 pinned runtime dependency, byte-identical replay.">
+<meta property="og:description" content="Deterministic mission control for AI agent colonies: 165 offline tests, 1 pinned runtime dependency, byte-identical replay.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://faresrafat3.github.io/colony-kernel/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0f14'/%3E%3Crect x='7' y='7' width='18' height='18' rx='3' fill='none' stroke='%234ade80' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%234ade80'/%3E%3C/svg%3E">
@@ -63,7 +63,7 @@
   <p class="sub">Colony Kernel is deterministic mission control for AI-agent colonies. Every state change, budget, and human approval goes through an auditable, fail-closed core. An agent saying <i>"this passed"</i> is not a verification result, and nothing in the kernel treats it as one.</p>
   <p class="sub" style="margin-top:14px"><b style="color:var(--acc)">The problem it solves.</b> Hand work to an AI agent and "I finished and it works" is a <i>claim</i> you cannot verify. A model that is wrong about its own success is worse than no agent at all. Colony makes the agent <i>propose</i> and a deterministic core <i>decide</i>. Trust comes from replayable evidence, not from the model's word.</p>
   <div class="badges">
-    <span class="badge"><b>162</b> offline tests</span>
+    <span class="badge"><b>165</b> offline tests</span>
     <span class="badge"><b>1</b> runtime dependency (pinned)</span>
     <span class="badge">replay: <b>byte-identical</b></span>
     <span class="badge">Node <b>≥22</b> · MIT</span>
@@ -121,7 +121,7 @@
   <p style="color:var(--dim);margin-top:14px">Reproduce it yourself, offline, in seconds:</p>
 <pre>git clone https://github.com/faresrafat3/colony-kernel &amp;&amp; cd colony-kernel
 npm install
-<span class="verify">npm run verify</span>   # typecheck + lint + 162 tests + claims + demo twice, byte-identical
+<span class="verify">npm run verify</span>   # typecheck + lint + 165 tests + claims + demo twice, byte-identical
 npm run demo &gt; a.json; npm run demo &gt; b.json
 diff a.json b.json   # empty — byte-identical replay</pre>
 </section>

@@ -106,6 +106,7 @@ function approvedTopUp(k: ReturnType<typeof buildTestKernel>, missionId: string)
     requestedTransition: { fromState: "IMPLEMENTATION", toState: "IMPLEMENTATION" },
     approvalPurpose: "BUDGET_TOPUP" as const,
     actionClass: "BUDGET" as const,
+    budgetTopUp: { resourceClass: "monetary_cost" as const, amount: 400 },
     requestedByRole: { roleId: "first-mate", roleVersion: 1 },
     requiredHumanAuthority: "captain",
     artifactSubjects: [],

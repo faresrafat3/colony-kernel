@@ -4,6 +4,7 @@
  */
 import { canonicalJson } from "../canonical/jcs.js";
 import { sha256Hex } from "../support/sha256.js";
+import type { ResourceClass } from "../budgets/ledger.js";
 
 export type ApprovalPurpose = "PLAN_APPROVAL" | "PACKAGE_APPROVAL" | "BUDGET_TOPUP";
 export type ActionClass = "LOCAL_READ" | "LOCAL_WRITE" | "PUBLIC_WRITE" | "BUDGET";
@@ -25,6 +26,12 @@ export interface ApprovalRequest {
   requestedTransition: { fromState: string; toState: string };
   approvalPurpose: ApprovalPurpose;
   actionClass: ActionClass;
+  /**
+   * BUDGET_TOPUP only: the terms this approval authorizes. Additive optional
+   * field (2026-10-29) so the human sees, and the subject hash binds, the
+   * amount and class — without it a top-up approval was a blank check.
+   */
+  budgetTopUp?: { resourceClass: ResourceClass; amount: number };
   requestedByRole: { roleId: string; roleVersion: number };
   /** Identity reference only — never a bearer token (N1). */
   requiredHumanAuthority: string;

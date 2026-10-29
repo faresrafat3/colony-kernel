@@ -60,3 +60,21 @@ events and the RECONCILIATION_REQUIRED edge; migration execution (N5) beyond
 filesystem workspace enforcement (path/traversal/symlink) which requires a real
 workspace adapter; the `colony-dsh-adapter` and pin paths (N9, M2). None of
 these is claimed as done anywhere in this project.
+
+## 8. Top-up approvals carry their terms (additive extension, 2026-10-29)
+
+The spec's `ApprovalRequest` field list has no amount or resource class, so a
+`BUDGET_TOPUP` approval authorized an amount the approver never saw. The
+implementation adds an optional `budgetTopUp: { resourceClass, amount }` field
+to `ApprovalRequest`; it is inside the subject hash, `requestBudgetTopUp`
+records it, and `applyBudgetTopUp` refuses any other class/amount
+(`INVALID_PURPOSE`), a request mutated after the record (`STALE_APPROVAL`) or
+an expired one (`EXPIRED_AT_COMMIT`). Additive and backward-compatible: gate
+requests omit the field and hash exactly as before; `schemaVersion` stays 1
+(optional field, no reader rejects unknown optional fields). The pinned spec is
+unchanged; this extension is for the next spec revision.
+
+A top-up request is an approval artifact, not a state change: the N10 edge
+table has no `APPROVAL_REQUESTED` edge outside the two gates, so the request
+row is stored without a mission event; the `BUDGET_TOPUP_APPROVED` event
+records the consumption.
