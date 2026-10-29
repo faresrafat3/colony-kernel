@@ -27,6 +27,10 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
 - Storage leases can be renewed: `renewLease(name, ttl)` extends a live lease
   and refuses an absent or expired one with `LEASE_NOT_HELD`, so a long writer
   no longer has to release and re-acquire. Tests 158 → 159.
+- `reserveMissionSequence` now hands out distinct, monotone values per mission
+  instead of repeating the state's next sequence; the allocator sits outside
+  the `atomicApply` snapshot, so a failed transaction cannot reissue a number.
+  Tests 159 → 160.
 
 ### Added
 

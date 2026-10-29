@@ -158,5 +158,21 @@ describe("I. isolation model", () => {
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.error.code).toBe("INVALID_SCHEMA");
   });
+
+  it("I-07: reserveMissionSequence hands out distinct monotone values", () => {
+    const k = buildTestKernel();
+    const { missionId } = k.kernel.createMission({ title: "t" }); // sequence 1 committed
+    const first = k.kernel.storage.reserveMissionSequence(missionId);
+    const second = k.kernel.storage.reserveMissionSequence(missionId);
+    expect(first.ok && first.value).toBe(2);
+    expect(second.ok && second.value).toBe(3);
+    k.kernel.startMission(missionId); // commits sequence 2
+    const third = k.kernel.storage.reserveMissionSequence(missionId);
+    expect(third.ok && third.value).toBe(4);
+    const unknownA = k.kernel.storage.reserveMissionSequence("no-such-mission");
+    const unknownB = k.kernel.storage.reserveMissionSequence("no-such-mission");
+    expect(unknownA.ok && unknownA.value).toBe(1);
+    expect(unknownB.ok && unknownB.value).toBe(2);
+  });
 });
 

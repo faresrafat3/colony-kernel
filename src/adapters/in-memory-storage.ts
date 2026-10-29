@@ -27,6 +27,8 @@ export class InMemoryColonyStorage implements ColonyStorage {
   private readonly states = new Map<string, MissionState>();  private readonly events = new Map<string, EventEnvelope>(); // by eventId
   private readonly eventsByMission = new Map<string, EventEnvelope[]>();
   private readonly sequences = new Map<string, string>(); // (missionId|seq) -> eventId
+  /** Last sequence handed out per mission; deliberately outside the snapshot. */
+  private readonly sequenceReservations = new Map<string, number>();
   private readonly idempotency = new Map<string, string>(); // key -> eventId
   private readonly artifacts = new Map<string, ArtifactManifest>();
   private readonly approvalRequests = new Map<string, ApprovalRequest>();
@@ -179,8 +181,14 @@ export class InMemoryColonyStorage implements ColonyStorage {
   }
 
   reserveMissionSequence(missionId: string): { ok: true; value: number } {
-    const state = this.states.get(missionId);
-    return { ok: true, value: (state?.missionSequence ?? 0) + 1 };
+    // A reservation is an allocator, not mission state: the counter is never
+    // rolled back by a failed atomicApply (gaps are legal; reuse is not). It
+    // also tracks committed events, so a restart-free replay cannot collide.
+    const applied = this.states.get(missionId)?.missionSequence ?? 0;
+    const reserved = this.sequenceReservations.get(missionId) ?? 0;
+    const next = Math.max(applied, reserved) + 1;
+    this.sequenceReservations.set(missionId, next);
+    return { ok: true, value: next };
   }
 
   finalizeArtifact(manifest: ArtifactManifest): { ok: true; value: void } | { ok: false; error: KernelError } {
