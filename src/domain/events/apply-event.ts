@@ -101,20 +101,23 @@ export function applyEvent(state: MissionState, event: EventEnvelope): MissionSt
   if (isPause(from) && !isPause(to)) {
     next = { ...next, resumeStage: null };
   }
-  // Revision entry records the returning stage (E19 target) and the severity the
-  // requesting event declared, so the exit can charge the right counter. A log
-  // written before this field existed reads as a content revision, which is what
-  // it charged.
-  if (to === "REVISION" && from !== "REVISION") {
+  // Revision entry records where a completed revision returns (the E19 target)
+  // and the severity the requesting event declared, so the exit can charge the
+  // right counter. Neither fact may be written while crossing a pause: a pause
+  // has its own return stage (resumeStage), and letting the two share one field
+  // left a revision unable to complete after an incident (ILLEGAL_TRANSITION).
+  // M1A persists nothing, so there is no pre-field log to read; a durable
+  // adapter must migrate it under N5 rather than guess these two facts.
+  if (to === "REVISION" && from !== "REVISION" && !isPause(from)) {
     next = {
       ...next,
-      resumeStage: from,
+      revisionReturnStage: from,
       pendingRevisionSeverity: event.payload["severity"] === "infrastructure" ? "infrastructure" : "content",
     };
   }
-  // Leaving REVISION clears the severity; nothing else reads it.
-  if (from === "REVISION" && to !== "REVISION") {
-    next = { ...next, pendingRevisionSeverity: null };
+  // Leaving REVISION for a normal stage ends the cycle and clears both facts.
+  if (from === "REVISION" && to !== "REVISION" && !isPause(to)) {
+    next = { ...next, revisionReturnStage: null, pendingRevisionSeverity: null };
   }
 
   // Subject binding updates carried by payload (plan/candidate/verification).

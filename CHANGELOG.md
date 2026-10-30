@@ -100,6 +100,31 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   step; the unused artifact-builder helpers are deleted, and the in-memory
   snapshot carries a `shortcut:` note naming its O(total state) limit. Tests
   176 → 177.
+- A revision no longer writes its return stage into `resumeStage`. That field
+  belongs to pause states, so entering HUMAN_REVIEW_REQUIRED from REVISION
+  overwrote it and `completeRevision` then threw ILLEGAL_TRANSITION: an
+  incident during a revision ended the mission's ability to finish it. The
+  return target is now its own state field, written and cleared only across a
+  normal (non-pause) revision entry and exit, so a revision survives an
+  incident pause and still returns to the stage that requested it.
+- N6 dedupe is enforced: an identical revision request — same issue code,
+  source artifact hash and role — is refused with `IDEMPOTENCY_CONFLICT` while
+  the first is still open, and the mission pauses for a human instead of
+  queueing a duplicate; the refusal is recorded durably. A completed cycle
+  accepts a fresh request, which is a retry citing its own new evidence.
+- Every stage that can open a revision can now finish it. `REVISION_REQUESTED`
+  was a stage-agnostic common row, so any nonterminal stage could enter a
+  revision — and E22 (DOCUMENTATION) and E28 (package rejection with a change
+  request) opened one with no matching exit, stranding the mission in REVISION
+  permanently. Entry is now the four spec-legal edges plus E14r
+  (IMPLEMENTATION, whose E19i return already existed), and the missing exits
+  are added: E19d returns a documentation byte change to VERIFICATION (spec N10
+  DOCUMENTATION row), E19p returns a text-only package rework to the package
+  gate without charging a second counter. Tests 179 → 181.
+- `settle(ledger, amount)` drops the `reservationId` parameter it accepted and
+  never read: M1A holds one aggregate reservation per (mission, class), so no
+  per-invocation id exists to settle against. The gap is stated in
+  `docs/SPEC_DEVIATIONS.md` §4.
 
 ### Added
 

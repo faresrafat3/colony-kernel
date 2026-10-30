@@ -721,7 +721,7 @@ export class ColonyKernel {
 
   settleBudget(missionId: string, resourceClass: ResourceClass, amount: number): BudgetLedger {
     const ledger = this.ledger(missionId, resourceClass);
-    const next = unwrap(attemptLedger(() => settle(ledger, "inv", amount)));
+    const next = unwrap(attemptLedger(() => settle(ledger, amount)));
     this.commit(missionId, (s) => ({
       events: [
         this.envelope(ET.BUDGET_SETTLED, s, this.actorFor(null, "KERNEL_POLICY", "kernel"), { resourceClass, amount, spent: next.spent }, {
@@ -871,8 +871,40 @@ export class ColonyKernel {
 
   // ── revision path (N6) ─────────────────────────────────────────────────
 
+  /** N6 dedupe: is an identical revision open — requested, no completion since? */
+  private openRevisionWithKey(missionId: string, dedupeKey: string): boolean {
+    let open = false;
+    for (const event of this.getEvents(missionId)) {
+      if (event.eventType === ET.REVISION_REQUESTED && event.payload["dedupeKey"] === dedupeKey) open = true;
+      else if (event.eventType === ET.REVISION_COMPLETED) open = false;
+    }
+    return open;
+  }
+
   requestRevision(input: { missionId: string; sourceArtifactId: string; sourceArtifactHash: string; requestedByRole: string; issueCode: RevisionIssueCode; severity: "content" | "infrastructure"; evidence: readonly { artifactId: string; contentSha256: string }[]; requiredChange: string }): RevisionRequest {
     const state = this.current(input.missionId);
+    const dedupeKey = revisionDedupeKey({
+      issueCode: input.issueCode,
+      sourceArtifactHash: input.sourceArtifactHash,
+      requestedByRoleId: input.requestedByRole,
+    });
+    // N6: an identical retry is a replay, not new work. While one is still open
+    // the second request is refused durably and the mission pauses for a human,
+    // instead of queueing a duplicate nobody asked for. A completed cycle
+    // accepts a fresh request: that is a retry citing its own new evidence.
+    if (this.openRevisionWithKey(input.missionId, dedupeKey)) {
+      unwrap(
+        this.storage.recordRejection({
+          missionId: input.missionId,
+          scope: "revision",
+          code: "IDEMPOTENCY_CONFLICT",
+          detail: { dedupeKey },
+          occurredAt: this.now(),
+        }),
+      );
+      this.escalateToHumanReview(input.missionId, { reason: "duplicate revision request", dedupeKey });
+      throw new KernelError("IDEMPOTENCY_CONFLICT", `an identical revision is already open (${dedupeKey})`, { dedupeKey });
+    }
     const request: RevisionRequest = {
       schemaVersion: 1,
       revisionId: this.ids.nextId("revision"),
@@ -892,7 +924,7 @@ export class ColonyKernel {
       ET.REVISION_REQUESTED,
       state,
       this.actorFor(input.requestedByRole, "ADMITTED_INVOCATION", input.requestedByRole),
-      { revisionId: request.revisionId, issueCode: request.issueCode, severity: request.severity, dedupeKey: revisionDedupeKey({ issueCode: request.issueCode, sourceArtifactHash: request.sourceArtifactHash, requestedByRoleId: request.requestedByRoleId }) },
+      { revisionId: request.revisionId, issueCode: request.issueCode, severity: request.severity, dedupeKey },
       { correlationId: this.ids.nextId("corr"), idempotencyKey: `revision:${request.revisionId}:requested` },
     );
     const committed = this.storage.atomicApply(input.missionId, [envelope], state.stateVersion, applyEvent);

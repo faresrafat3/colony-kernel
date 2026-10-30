@@ -104,8 +104,15 @@ export function reserve(ledger: BudgetLedger, amount: number): BudgetLedger {
   return withVersion({ ...ledger, reserved: ledger.reserved + amount });
 }
 
-/** Settlement transfers amount from reserved to spent, atomically (N4 req 8). */
-export function settle(ledger: BudgetLedger, reservationId: string, amount: number): BudgetLedger {
+/**
+ * Settlement transfers amount from reserved to spent, atomically (N4 req 8).
+ *
+ * M1A holds one aggregate reservation per (mission, class), so there is no
+ * per-invocation id to settle against; an earlier `reservationId` parameter was
+ * accepted and never read. Per-invocation reservations arrive with the N3
+ * outbox (SPEC_DEVIATIONS §7).
+ */
+export function settle(ledger: BudgetLedger, amount: number): BudgetLedger {
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new KernelError("INVALID_SCHEMA", "settlement amount must be a positive integer", { amount });
   }

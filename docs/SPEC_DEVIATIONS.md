@@ -36,6 +36,12 @@ holds at every commit and is asserted by tests.
 reserved until an explicit `release` (N4 req 8 vs req 9). E-01 asserts both
 steps and the resulting `remainingCapacity`.
 
+One aggregate reservation is held per `(mission, resourceClass)`, so settlement
+names no reservation id: M1A cannot tell one invocation's hold from another's.
+Per-invocation reservations (N3's outbox row carrying its own hold) are deferred
+with the rest of N3 (§7); `settle` accepted and ignored a `reservationId`
+parameter until 2026-10-30.
+
 ## 5. Blob/artifact persistence is in-memory only
 
 N7 names a SQLite-backed `CUSTOM_SQLITE_STORAGE_PLUGIN_REQUIRED`; M1A binds

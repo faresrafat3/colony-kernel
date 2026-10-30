@@ -51,6 +51,7 @@ export const EDGES: readonly Edge[] = [
   { id: "E14b", from: S.IMPLEMENTATION, event: ET.ARTIFACT_FINALIZED, to: S.IMPLEMENTATION, requiresApproval: false },
   { id: "E14v", from: S.VERIFICATION, event: ET.ARTIFACT_FINALIZED, to: S.VERIFICATION, requiresApproval: false },
   { id: "E14", from: S.IMPLEMENTATION, event: ET.IMPLEMENTATION_COMPLETED, to: S.VERIFICATION, requiresApproval: false },
+  { id: "E14r", from: S.IMPLEMENTATION, event: ET.REVISION_REQUESTED, to: S.REVISION, requiresApproval: false },
   { id: "E15", from: S.VERIFICATION, event: ET.VERIFICATION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false },
   { id: "E16", from: S.VERIFICATION, event: ET.REVISION_REQUESTED, to: S.REVISION, requiresApproval: false },
   { id: "E17", from: S.TECHNICAL_REVIEW, event: ET.TECHNICAL_REVIEW_COMPLETED, to: S.DOCUMENTATION, requiresApproval: false },
@@ -59,12 +60,21 @@ export const EDGES: readonly Edge[] = [
   // infrastructure-only retry charges verificationInfraRetryCount; a content
   // revision charges revisionCount. N6 keeps the two budgets separate, so a run
   // of infra flakes cannot spend the content-revision allowance.
-  { id: "E19i", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.IMPLEMENTATION && s.pendingRevisionSeverity !== "infrastructure" },
-  { id: "E19v", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.VERIFICATION && s.pendingRevisionSeverity !== "infrastructure" },
-  { id: "E19t", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.resumeStage === S.TECHNICAL_REVIEW && s.pendingRevisionSeverity !== "infrastructure" },
-  { id: "E19i-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.resumeStage === S.IMPLEMENTATION && s.pendingRevisionSeverity === "infrastructure" },
-  { id: "E19v-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.resumeStage === S.VERIFICATION && s.pendingRevisionSeverity === "infrastructure" },
-  { id: "E19t-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.resumeStage === S.TECHNICAL_REVIEW && s.pendingRevisionSeverity === "infrastructure" },
+  { id: "E19i", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.revisionReturnStage === S.IMPLEMENTATION && s.pendingRevisionSeverity !== "infrastructure" },
+  { id: "E19v", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.revisionReturnStage === S.VERIFICATION && s.pendingRevisionSeverity !== "infrastructure" },
+  { id: "E19t", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.revisionReturnStage === S.TECHNICAL_REVIEW && s.pendingRevisionSeverity !== "infrastructure" },
+  // A documentation byte change re-enters verification (spec N10, DOCUMENTATION
+  // row), so the revision opened by E22 returns to VERIFICATION, not to the
+  // stage it came from. Without this edge E22 opened a revision with no exit.
+  { id: "E19d", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "revisionCount", matches: (s) => s.revisionReturnStage === S.DOCUMENTATION && s.pendingRevisionSeverity !== "infrastructure" },
+  { id: "E19d-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.revisionReturnStage === S.DOCUMENTATION && s.pendingRevisionSeverity === "infrastructure" },
+  // E28 opens a revision from the package gate (text-only package rework). It
+  // charges textOnlyPackageReworkCount at entry, so this exit charges nothing:
+  // charging revisionCount too would tie two bounds that N6 keeps separate.
+  { id: "E19p", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.AWAITING_PUBLISH_APPROVAL, requiresApproval: false, matches: (s) => s.revisionReturnStage === S.AWAITING_PUBLISH_APPROVAL },
+  { id: "E19i-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.IMPLEMENTATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.revisionReturnStage === S.IMPLEMENTATION && s.pendingRevisionSeverity === "infrastructure" },
+  { id: "E19v-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.VERIFICATION, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.revisionReturnStage === S.VERIFICATION && s.pendingRevisionSeverity === "infrastructure" },
+  { id: "E19t-infra", from: S.REVISION, event: ET.REVISION_COMPLETED, to: S.TECHNICAL_REVIEW, requiresApproval: false, consumesCounter: "verificationInfraRetryCount", matches: (s) => s.revisionReturnStage === S.TECHNICAL_REVIEW && s.pendingRevisionSeverity === "infrastructure" },
   { id: "E21", from: S.DOCUMENTATION, event: ET.DOCUMENTATION_COMPLETED, to: S.FINAL_POLICY_GATE, requiresApproval: false },
   { id: "E22", from: S.DOCUMENTATION, event: ET.REVISION_REQUESTED, to: S.REVISION, requiresApproval: false },
   { id: "E23", from: S.FINAL_POLICY_GATE, event: ET.FINAL_GATE_COMPLETED, to: S.AWAITING_PUBLISH_APPROVAL, requiresApproval: false, matches: (_s, p) => p["verdict"] === V.allowed, guardLabel: `verdict=${V.allowed}` },
@@ -103,7 +113,11 @@ const NONTERMINAL_COMMON: readonly { event: EventType; to: MissionStage | "SELF"
   { event: ET.BUDGET_SETTLED, to: "SELF" },
   { event: ET.BUDGET_RELEASED, to: "SELF" },
   { event: ET.BUDGET_TOPUP_APPROVED, to: "SELF" },
-  { event: ET.REVISION_REQUESTED, to: S.REVISION },
+  // REVISION_REQUESTED is deliberately absent: a revision may only be opened
+  // from the four stages whose spec contract names it (IMPLEMENTATION E14r,
+  // VERIFICATION E16, TECHNICAL_REVIEW E18, DOCUMENTATION E22), so every entry
+  // has an E19 exit. A blanket row here let any nonterminal stage enter a
+  // revision it could not leave — E22 at DOCUMENTATION did exactly that.
   { event: ET.RECOVERY_STARTED, to: S.HUMAN_REVIEW_REQUIRED },
 ];
 

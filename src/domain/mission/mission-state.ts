@@ -23,6 +23,8 @@ export interface MissionState {
   };
   /** Severity of the revision cycle in flight; null outside REVISION (N6). */
   pendingRevisionSeverity: "content" | "infrastructure" | null;
+  /** Stage a completed revision returns to; null outside REVISION (E19). */
+  revisionReturnStage: MissionStage | null;
   /** Digests of the currently bound plan/candidate/verification subjects. */
   boundPlanSha256: string | null;
   boundCandidateSha256: string | null;
@@ -59,6 +61,7 @@ export function initialMissionState(input: {
     resumeStage: null,
     counters: emptyCounters(),
     pendingRevisionSeverity: null,
+    revisionReturnStage: null,
     boundPlanSha256: null,
     boundCandidateSha256: null,
     boundVerificationSha256: null,
