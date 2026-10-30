@@ -35,7 +35,12 @@ export interface ColonyStorage {
      * orphan artifact is harmless (H-03), so those are written outside.
      */
     effects?: (committed: MissionState) => void,
-  ): Result<{ state: MissionState; appended: number }>;
+    /**
+     * `alreadyApplied` is true when the batch was a delivery retry of an event
+     * this store already holds: the call succeeds with `appended: 0` and no
+     * state change (N2 req 2), so a retrying sender does not see an error.
+     */
+  ): Result<{ state: MissionState; appended: number; alreadyApplied?: boolean }>;
 
   appendEvent(envelope: EventEnvelope): Result<void>;
   getEventById(eventId: string): Result<EventEnvelope | undefined>;

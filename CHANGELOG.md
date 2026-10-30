@@ -125,6 +125,24 @@ independently (v0.1.1, hash-pinned); kernel releases do not bump it silently.
   never read: M1A holds one aggregate reservation per (mission, class), so no
   per-invocation id exists to settle against. The gap is stated in
   `docs/SPEC_DEVIATIONS.md` §4.
+- A delivery retry of an event the store already holds succeeds with
+  `alreadyApplied: true` and `appended: 0` instead of failing, matching N2
+  req 2. Identical bytes are a retry; a reused `eventId` with different bytes is
+  still `IDEMPOTENCY_CONFLICT`. The unused `ALREADY_APPLIED` error code is gone:
+  the outcome lives on the success result, not in the failure vocabulary.
+  B-01/B-02 now assert this behaviour instead of accepting any of three codes.
+- The fake runtime implements the port the way the host adapter does: a
+  replayed `idempotencyKey` returns the original record classified
+  `duplicate` without consuming a script slot, and an exhausted script is
+  classified `infrastructure_failure` instead of `capability_denied` (its
+  history line contradicted its own error code). Tests 181 → 182.
+- Dead code deleted: `withLimitMutation` (the command throws directly), the
+  single-product `Hasher` port and `Sha256Hasher`, the unused `ok()` helper,
+  `fingerprintForDuplicate` (its only consumer was a test asserting it exists),
+  the Hermes adapter's injected-clock option (stored, never read — and its test
+  asserted only that a mock was defined), and the always-empty
+  `consumedApprovalSubjectHashes` state field (at-most-once enforcement lives in
+  the storage adapter).
 
 ### Added
 

@@ -156,14 +156,6 @@ export function applyTopUp(ledger: BudgetLedger, topUp: BudgetTopUp): BudgetLedg
   return next;
 }
 
-/** Any attempt to mutate immutableLimit is an integrity failure (N4 req 2). */
-export function withLimitMutation(ledger: BudgetLedger): never {
-  throw new KernelError("INTEGRITY_FAILURE", "immutableLimit mutation is forbidden", {
-    missionId: ledger.missionId,
-    resourceClass: ledger.resourceClass,
-  });
-}
-
 function withVersion(ledger: BudgetLedger): BudgetLedger {
   return { ...ledger, ledgerVersion: ledger.ledgerVersion + 1 };
 }

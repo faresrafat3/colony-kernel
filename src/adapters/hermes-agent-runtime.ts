@@ -72,8 +72,6 @@ export interface HermesAgentRuntimeOptions {
   profile?: string;
   /** Wall-clock budget for one live invocation, milliseconds. */
   timeoutMs?: number;
-  /** Injected clock, so even live-mode timestamps are reproducible in tests. */
-  now?: () => Date;
   /** Injected runner, so live mode is testable without spawning anything. */
   run?: (command: string, args: readonly string[], timeoutMs: number) => {
     status: number | null;
@@ -131,7 +129,6 @@ export class HermesAgentRuntime implements AgentRuntime {
   private readonly script: HermesScriptedResponse[];
   private readonly profile: string;
   private readonly timeoutMs: number;
-  private readonly now: () => Date;
   private readonly run: NonNullable<HermesAgentRuntimeOptions["run"]>;
   private readonly secretPatterns: readonly RegExp[];
   private cursor = 0;
@@ -150,7 +147,6 @@ export class HermesAgentRuntime implements AgentRuntime {
     this.script = [...(options.script ?? [])];
     this.profile = options.profile ?? "";
     this.timeoutMs = options.timeoutMs ?? 60_000;
-    this.now = options.now ?? (() => new Date());
     this.run = options.run ?? defaultRunner;
     this.secretPatterns = options.secretPatterns ?? DEFAULT_SECRET_PATTERNS;
 

@@ -9,7 +9,7 @@ import { initialMissionState } from "../../src/domain/mission/mission-state.js";
 import { sha256Hex } from "../../src/domain/support/sha256.js";
 
 describe("B. events", () => {
-  it("B-01: re-applying the same eventId returns ALREADY_APPLIED with no state change", () => {
+  it("B-01: the pure reducer has no memory — re-applying an event to its own stale state fails closed", () => {
     const k = buildTestKernel();
     const { missionId } = k.kernel.createMission({ title: "t" });
     const events = k.kernel.getEvents(missionId);
@@ -17,17 +17,28 @@ describe("B. events", () => {
     const seed = initialMissionState({ missionId, title: "t", createdAt: first.occurredAt });
     const once = applyEvent(seed, first);
     expect(once.missionSequence).toBe(1);
-    // Duplicate delivery: same eventId, same everything → ALREADY_APPLIED, not applied again.
-    expect(() => applyEvent({ ...once, missionSequence: 1, stateVersion: 1, stage: "CREATED" }, { ...first, expectedStateVersion: 0 })).toThrow(/ALREADY_APPLIED|SEQUENCE_CONFLICT|CONCURRENCY_CONFLICT/);
+    // applyEvent is a pure function of (state, event): it cannot know the event
+    // was already delivered, so the stale version guard is what refuses it. The
+    // delivery-retry case belongs to the store and is covered by B-02.
+    expect(() => applyEvent({ ...once, missionSequence: 1, stateVersion: 1, stage: "CREATED" }, { ...first, expectedStateVersion: 0 })).toThrow(/SEQUENCE_CONFLICT|CONCURRENCY_CONFLICT/);
   });
 
-  it("B-02: duplicate delivery cannot increment missionSequence (storage unique constraint)", () => {
+  it("B-02: a delivery retry is not an error and does not advance the mission (N2 req 2)", () => {
     const k = buildTestKernel();
     const { missionId } = k.kernel.createMission({ title: "t" });
     const first = k.kernel.getEvents(missionId)[0];
-    const applied = k.storage.atomicApply(missionId, [first], 0, applyEvent);
-    expect(applied.ok).toBe(false);
-    if (!applied.ok) expect(["IDEMPOTENCY_CONFLICT", "SEQUENCE_CONFLICT", "CONCURRENCY_CONFLICT"]).toContain(applied.error.code);
+    // Same event, redelivered by a sender that never saw the ack.
+    const retried = k.storage.atomicApply(missionId, [first], 0, applyEvent);
+    expect(retried.ok).toBe(true);
+    if (retried.ok) {
+      expect(retried.value).toMatchObject({ appended: 0, alreadyApplied: true });
+    }
+    expect(k.kernel.getMission(missionId)?.missionSequence).toBe(1);
+    // A reused eventId carrying different bytes is still a conflict, not a retry.
+    const tampered = { ...first, payload: { title: "other" }, payloadSha256: canonicalPayloadHash({ title: "other" }) };
+    const conflict = k.storage.atomicApply(missionId, [tampered], 0, applyEvent);
+    expect(conflict.ok).toBe(false);
+    if (!conflict.ok) expect(conflict.error.code).toBe("IDEMPOTENCY_CONFLICT");
     expect(k.kernel.getMission(missionId)?.missionSequence).toBe(1);
   });
 

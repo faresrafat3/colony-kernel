@@ -3,12 +3,6 @@ export interface Clock {
   now(): Date;
 }
 
-/** Content hashing (Colony-owned port; adapter binds the implementation). */
-export interface Hasher {
-  sha256Hex(input: string): string;
-  sha256Bytes(input: Uint8Array): Uint8Array;
-}
-
 /** Host-generated identifiers and nonces (≥128 bits). Never model-supplied. */
 export interface IdGenerator {
   nextId(scope: string): string;

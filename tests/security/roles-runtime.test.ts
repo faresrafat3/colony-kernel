@@ -154,6 +154,38 @@ describe("G. fake runtime", () => {
     expect(k.runtime.history[0]?.outcomeClass).toBe("timeout");
   });
 
+  it("G-09: the fake runtime honours the port's duplicate outcome like the host adapter", () => {
+    // One port, two adapters: a replayed idempotency key must be classified
+    // `duplicate` in both, must not consume a second script slot, and must not
+    // produce a different record (the port says same key → same record).
+    const k = buildTestKernel({
+      script: [
+        { kind: "success", artifact: { fields: { x: "y" } } as never, artifactType: "recon_brief" },
+        { kind: "timeout" },
+      ],
+    });
+    const { missionId } = k.kernel.createMission({ title: "t" });
+    const call = () =>
+      k.kernel.invokeAgent({ invocationId: "dup-1", missionId, roleId: "first-mate", roleVersion: 1, capabilityId: "conduct_reconnaissance", input: { objective: "o", inputArtifactIds: [], parameters: {} }, idempotencyKey: "k-dup" });
+    const first = call();
+    const second = call();
+    expect(second.outcomeClass).toBe("duplicate");
+    expect(second.responseFingerprint).toBe(first.responseFingerprint);
+    // The second script entry (a timeout) was never reached.
+    expect(k.runtime.history.map((h) => h.outcomeClass)).toEqual(["success", "duplicate"]);
+  });
+
+  it("G-10: an exhausted script is classified as infrastructure, not a policy denial", () => {
+    // The history line and the returned error must name the same cause: a
+    // harness that ran dry is infrastructure, never `capability_denied`.
+    const k = buildTestKernel({ script: [] });
+    const { missionId } = k.kernel.createMission({ title: "t" });
+    expect(() =>
+      k.kernel.invokeAgent({ invocationId: "i10", missionId, roleId: "first-mate", roleVersion: 1, capabilityId: "conduct_reconnaissance", input: { objective: "o", inputArtifactIds: [], parameters: {} }, idempotencyKey: "k10" }),
+    ).toThrow(/RUNTIME_INFRASTRUCTURE_FAILURE/);
+    expect(k.runtime.history.at(-1)?.outcomeClass).toBe("infrastructure_failure");
+  });
+
   it("G-08: runtime performs no I/O — module imports contain no node:fs/net/http", () => {
     // Structural assertion enforced by the self-review sweep (scripts/guard.mjs);
     // here we assert the registry has no publication capability and the runtime
@@ -162,7 +194,7 @@ describe("G. fake runtime", () => {
     expect(typeof k.runtime.invoke).toBe("function");
     const proto = Object.getOwnPropertyNames(Object.getPrototypeOf(k.runtime)).sort();
     expect(proto).toContain("invoke");
-    expect(proto).toContain("fingerprintForDuplicate");
+    expect(proto).not.toContain("fingerprintForDuplicate");
     // No I/O surface exists: no fs/net/http/process members on the runtime.
     expect(proto.some((m) => /exec|spawn|fetch|read|write|connect/i.test(m))).toBe(false);
   });

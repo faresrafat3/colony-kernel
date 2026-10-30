@@ -1,5 +1,4 @@
-import type { Clock, Hasher, IdGenerator, TelemetrySink, TelemetryEntry } from "../ports/kernel-ports.js";
-import { sha256Bytes, sha256Hex } from "../domain/support/sha256.js";
+import type { Clock, IdGenerator, TelemetrySink, TelemetryEntry } from "../ports/kernel-ports.js";
 
 /** Fixed-instant clock: the whole mission runs at one injected instant. */
 export class DeterministicClock implements Clock {
@@ -80,16 +79,6 @@ export class DeterministicIdGenerator implements IdGenerator {
 
   nextNonce(): string {
     return this.next128Hex() + this.next128Hex(); // 256 bits ≥ 128 bits
-  }
-}
-
-/** Domain hasher adapter (pure sha256; no node:crypto anywhere). */
-export class Sha256Hasher implements Hasher {
-  sha256Hex(input: string): string {
-    return sha256Hex(input);
-  }
-  sha256Bytes(input: Uint8Array): Uint8Array {
-    return sha256Bytes(input);
   }
 }
 

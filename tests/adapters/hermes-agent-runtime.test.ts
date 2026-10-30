@@ -13,7 +13,7 @@
  * Deterministic: no network, no subprocess. Live mode is exercised through an
  * injected runner.
  */
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   HermesAgentRuntime,
@@ -352,13 +352,6 @@ describe("H5 — the adapter records what it did", () => {
     expect(a.history[1].responseFingerprint).toBeNull();
   });
 
-  it("the injected clock is used, so live-mode timestamps are reproducible", () => {
-    const now = vi.fn(() => new Date(Date.UTC(2026, 0, 1)));
-    const { run } = stubRunner({ stdout: "ok" });
-    const a = new HermesAgentRuntime({ mode: "live", profile: "scout", run, now });
-    a.invoke(invocation());
-    expect(now).toBeDefined();
-  });
 });
 
 // ───────────────────────────────────────────────────────────────────────────

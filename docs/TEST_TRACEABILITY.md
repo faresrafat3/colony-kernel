@@ -16,6 +16,7 @@ All tests below actually RAN in this milestone (vitest, Node v26.8.2, two consec
 | A-08 | A. state machine | tests/.../state-machine.test.ts | PASS (ran) |
 | A-09 | A. state machine | tests/.../state-machine.test.ts | PASS (ran) |
 | A-10 | A. state machine | tests/.../state-machine.test.ts | PASS (ran) |
+| A-11..A-16 | A. state machine | tests/.../state-machine.test.ts | PASS (ran) |
 | B-01 | B. events | tests/.../events.test.ts | PASS (ran) |
 | B-02 | B. events | tests/.../events.test.ts | PASS (ran) |
 | B-03 | B. events | tests/.../events.test.ts | PASS (ran) |
@@ -63,6 +64,8 @@ All tests below actually RAN in this milestone (vitest, Node v26.8.2, two consec
 | G-06 | G. runtime | tests/.../roles-runtime.test.ts | PASS (ran) |
 | G-07 | G. runtime | tests/.../roles-runtime.test.ts | PASS (ran) |
 | G-08 | G. runtime | tests/.../roles-runtime.test.ts | PASS (ran) |
+| G-09 | G. runtime | tests/.../roles-runtime.test.ts | PASS (ran) |
+| G-10 | G. runtime | tests/.../roles-runtime.test.ts | PASS (ran) |
 | H-01 | H. recovery | tests/.../recovery-isolation.test.ts | PASS (ran) |
 | H-02 | H. recovery | tests/.../recovery-isolation.test.ts | PASS (ran) |
 | H-03 | H. recovery | tests/.../recovery-isolation.test.ts | PASS (ran) |

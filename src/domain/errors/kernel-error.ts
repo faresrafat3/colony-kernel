@@ -3,7 +3,6 @@ export type KernelErrorCode =
   | "INVALID_SCHEMA"
   | "UNSUPPORTED_SCHEMA_VERSION"
   | "INVALID_EVENT"
-  | "ALREADY_APPLIED"
   | "SEQUENCE_CONFLICT"
   | "CONCURRENCY_CONFLICT"
   | "ILLEGAL_TRANSITION"
@@ -56,7 +55,6 @@ export type Result<T, E = KernelError> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
-export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 export const err = <E extends KernelError>(error: E): Result<never, E> => ({ ok: false, error });
 
 /** Invoke fn; if it throws a KernelError, convert to a structured error result. */

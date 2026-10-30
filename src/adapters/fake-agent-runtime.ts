@@ -24,6 +24,8 @@ export type ScriptedResponse =
 export class FakeAgentRuntime implements AgentRuntime {
   private readonly script: ScriptedResponse[];
   private cursor = 0;
+  /** IdempotencyKey → the record already produced for it (port `duplicate`). */
+  private readonly idempotent = new Map<string, AgentInvocationRecord>();
   readonly history: {
     invocation: AgentInvocation;
     outcomeClass: InvocationOutcomeClass | "capability_denied";
@@ -42,10 +44,20 @@ export class FakeAgentRuntime implements AgentRuntime {
     if (request.attempt > request.maximumAttempts) {
       return this.deny(request, new KernelError("INVOCATION_LIMIT_EXCEEDED", "attempt exceeds maximumAttempts", {}));
     }
+    // Idempotent replay: the same key already produced a record. Return it as
+    // `duplicate` without consuming a script slot or touching history's state.
+    const seen = this.idempotent.get(request.idempotencyKey);
+    if (seen !== undefined) {
+      const record: AgentInvocationRecord = { ...seen, outcomeClass: "duplicate" };
+      this.history.push({ invocation: request, outcomeClass: "duplicate", responseFingerprint: record.responseFingerprint });
+      return { ok: true, value: record };
+    }
     const response = this.script[this.cursor];
     this.cursor += 1;
     if (response === undefined) {
-      return this.deny(request, new KernelError("RUNTIME_INFRASTRUCTURE_FAILURE", "script exhausted", {}));
+      // A missing script entry is the harness running dry, not a policy denial:
+      // classify it as infrastructure so the history agrees with the error code.
+      return this.fail(request, "RUNTIME_INFRASTRUCTURE_FAILURE", { reason: "script_exhausted" });
     }
     switch (response.kind) {
       case "success": {
@@ -56,6 +68,7 @@ export class FakeAgentRuntime implements AgentRuntime {
           detail: { artifactType: response.artifactType },
           responseFingerprint: this.fingerprint(request, response),
         };
+        this.idempotent.set(request.idempotencyKey, record);
         this.history.push({ invocation: request, outcomeClass: "success", responseFingerprint: record.responseFingerprint });
         return { ok: true, value: record };
       }
@@ -68,11 +81,6 @@ export class FakeAgentRuntime implements AgentRuntime {
       case "infrastructure_failure":
         return this.fail(request, "RUNTIME_INFRASTRUCTURE_FAILURE", response.detail);
     }
-  }
-
-  /** Duplicate idempotent invocation: same key returns the same fingerprint. */
-  fingerprintForDuplicate(request: AgentInvocation): string {
-    return this.fingerprint(request, { kind: "duplicate-marker" });
   }
 
   private fingerprint(request: AgentInvocation, marker: unknown): string {

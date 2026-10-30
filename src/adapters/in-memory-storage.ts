@@ -67,7 +67,19 @@ export class InMemoryColonyStorage implements ColonyStorage {
     expectedStateVersion: number,
     reduce: (state: MissionState, event: EventEnvelope) => MissionState,
     effects?: (committed: MissionState) => void,
-  ): { ok: true; value: { state: MissionState; appended: number } } | { ok: false; error: KernelError } {
+  ): { ok: true; value: { state: MissionState; appended: number; alreadyApplied?: boolean } } | { ok: false; error: KernelError } {
+    // N2 req 2: a delivery retry of an event this store already holds is not an
+    // error and changes nothing. Identical bytes only; a reused eventId with
+    // different bytes is still a conflict.
+    const delivery = this.classifyDelivery(events);
+    if (delivery.kind === "conflict") return { ok: false, error: delivery.error };
+    if (delivery.kind === "replay") {
+      const state = this.states.get(missionId);
+      if (state === undefined) {
+        return { ok: false, error: new KernelError("INVALID_EVENT", `mission ${missionId} not found`, {}) };
+      }
+      return { ok: true, value: { state, appended: 0, alreadyApplied: true } };
+    }
     const snapshot = this.snapshot();
     try {
       let state = this.states.get(missionId);
@@ -130,6 +142,30 @@ export class InMemoryColonyStorage implements ColonyStorage {
       if (e instanceof KernelError) return { ok: false, error: e };
       throw e;
     }
+  }
+
+  /**
+   * N2 req 2 classification for one re-delivered event: new work, an identical
+   * retry, or a reused eventId carrying different bytes. A batch is always new
+   * work — retries are single events.
+   */
+  private classifyDelivery(
+    events: readonly EventEnvelope[],
+  ): { kind: "new" } | { kind: "replay" } | { kind: "conflict"; error: KernelError } {
+    if (events.length !== 1) return { kind: "new" };
+    const event = events[0] as EventEnvelope;
+    const stored = this.events.get(event.eventId);
+    if (stored === undefined) return { kind: "new" };
+    const identical =
+      stored.eventType === event.eventType &&
+      stored.missionId === event.missionId &&
+      stored.missionSequence === event.missionSequence &&
+      stored.payloadSha256 === event.payloadSha256;
+    if (identical) return { kind: "replay" };
+    return {
+      kind: "conflict",
+      error: new KernelError("IDEMPOTENCY_CONFLICT", `eventId ${event.eventId} already exists with different bytes`, {}),
+    };
   }
 
   private appendConflict(event: EventEnvelope): KernelError | null {

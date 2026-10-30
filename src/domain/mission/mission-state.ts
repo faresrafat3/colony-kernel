@@ -29,8 +29,6 @@ export interface MissionState {
   boundPlanSha256: string | null;
   boundCandidateSha256: string | null;
   boundVerificationSha256: string | null;
-  /** Consumed approval subject hashes (at-most-once enforcement). */
-  consumedApprovalSubjectHashes: readonly string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -65,7 +63,6 @@ export function initialMissionState(input: {
     boundPlanSha256: null,
     boundCandidateSha256: null,
     boundVerificationSha256: null,
-    consumedApprovalSubjectHashes: [],
     createdAt: input.createdAt,
     updatedAt: input.createdAt,
   };
